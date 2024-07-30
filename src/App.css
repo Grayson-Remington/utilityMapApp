@@ -1,0 +1,75 @@
+.mapDiv {
+	padding: 0;
+	margin: 0;
+	height: 100%;
+	width: 100%;
+}
+
+#customTextDiv {
+	width: 283px;
+	height: 100%;
+	color: red;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+.symbol {
+	display: none;
+}
+
+.imageOptionsDiv {
+	padding: 5px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	background-color: #f3f3f3;
+	height: 100%;
+	width: 283px;
+}
+.optionsImage {
+	height: 30px;
+	width: 30px;
+}
+.selectedImage {
+	box-shadow: 0 0 0 3px rgb(101, 89, 204);
+}
+.featureList {
+	background-color: #f3f3f3;
+	color: black;
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	width: 300px; /* Fixed width */
+	height: 200px; /* Fixed height */
+	overflow-y: auto; /* Enable vertical scroll */
+	border: 1px solid #000000; /* Optional border for visual clarity */
+	/* Optional padding inside the scrollable container */
+}
+
+ul {
+	width: fit-content;
+	display: flex;
+
+	flex-direction: column;
+	gap: 4px;
+}
+
+#customForm {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	background: white;
+	padding: 10px;
+	border-radius: 5px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+#customForm label {
+	display: block;
+	margin-bottom: 5px;
+}
+#customForm input {
+	width: 100%;
+	margin-bottom: 10px;
+	padding: 5px;
+}

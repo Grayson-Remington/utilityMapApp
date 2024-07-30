@@ -1,0 +1,11 @@
+Map Game Idea
+
+- Pick a location for your friend. 
+- time starts at 30 secs
+- starts zoomed in and you can use a zoom to zoom out, but it costs time
+- Guess the state you are in
+- Type answer in // Or choose from list?
+- socket.io
+- state borders or no?
+- how to make sure that points are selected within the US?
+-
