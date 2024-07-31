@@ -282,11 +282,12 @@ function App() {
 				renderer: polylineRenderer, // Define your renderer as needed
 			});
 			const fetchPoints = async () => {
+				console.log('fired');
 				try {
 					const response = await axios.get(
-						'http://localhost:5000/points'
+						`${process.env.DATABASE_URL}/points`
 					);
-
+					console.log(response);
 					const fetchedPoints = response.data;
 					console.log(fetchedPoints);
 					const graphics = fetchedPoints.map((pointData) => {
@@ -333,7 +334,7 @@ function App() {
 			const fetchPolylines = async () => {
 				try {
 					const response = await axios.get(
-						'http://localhost:5000/polylines'
+						`${process.env.DATABASE_URL}/polylines`
 					);
 
 					const fetchedPolylines = response.data;
@@ -510,7 +511,7 @@ function App() {
 										console.log('first created data', data);
 										try {
 											const response = await axios.post(
-												'http://localhost:5000/points',
+												`${process.env.DATABASE_URL}/points`,
 												data
 											);
 											console.log(
@@ -583,7 +584,7 @@ function App() {
 										console.log('first created data', data);
 										try {
 											const response = await axios.post(
-												'http://localhost:5000/polylines',
+												`${process.env.DATABASE_URL}/polylines`,
 												data
 											);
 											console.log(
@@ -677,7 +678,7 @@ function App() {
 							console.log('updated data', data);
 							try {
 								const response = await axios.post(
-									'http://localhost:5000/update-point',
+									`${process.env.DATABASE_URL}/update-point`,
 									data
 								);
 								console.log(
@@ -750,7 +751,7 @@ function App() {
 							console.log('updated data', data);
 							try {
 								const response = await axios.post(
-									'http://localhost:5000/update-polyline',
+									`${process.env.DATABASE_URL}/update-polyline`,
 									data
 								);
 								console.log(
