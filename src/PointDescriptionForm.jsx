@@ -69,7 +69,19 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 			],
 		}));
 	};
-
+	const handleDeleteAttachment = (index) => {
+		setPointDescription((prevPointDescription) => {
+			// Create a copy of the current utilityAttachments array
+			const newAttachments = [...prevPointDescription.utilityAttachments];
+			// Remove the attachment at the specified index
+			newAttachments.splice(index, 1);
+			// Return the new state with the updated utilityAttachments array
+			return {
+				...prevPointDescription,
+				utilityAttachments: newAttachments,
+			};
+		});
+	};
 	const handleSubmit = (event) => {
 		event.preventDefault();
 
@@ -222,11 +234,18 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 						<h3>Utilities</h3>
 
 						<table id='customers'>
+							<colgroup>
+								<col />
+								<col />
+								<col />
+								<col style={{ width: '50px' }} />
+							</colgroup>
 							<thead>
 								<tr>
 									<th>Utility Owner</th>
 									<th>Equipment</th>
 									<th>Laterals</th>
+									<th></th>
 								</tr>
 							</thead>
 							{pointDescription.utilityAttachments.map(
@@ -262,6 +281,16 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 													}
 													onChange={handleChange}
 												/>
+											</td>
+											<td>
+												<button
+													className='esri-icon-trash'
+													onClick={() =>
+														handleDeleteAttachment(
+															index
+														)
+													}
+												></button>
 											</td>
 										</tr>
 									</tbody>
