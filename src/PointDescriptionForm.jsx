@@ -6,9 +6,13 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 	const [pointDescription, setPointDescription] = useState({
 		poleNumber: '',
 		poleOwner: '',
-		powerPhase: '',
-		powerAttachment: '',
-		utilityAttachments: [{ utilityOwner: 'Verizon', spliceCase: 'yes' }],
+		domPowerPhase: '',
+		domPowerEquipment: '',
+		domPowerLaterals: '',
+		cityPowerPhase: '',
+		cityPowerEquipment: '',
+		cityPowerLaterals: '',
+		utilityAttachments: [],
 	});
 
 	useEffect(() => {
@@ -17,8 +21,12 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 			setPointDescription({
 				poleNumber: graphic.attributes.poleNumber || '',
 				poleOwner: graphic.attributes.poleOwner || '',
-				powerPhase: graphic.attributes.powerPhase || '',
-				powerAttachment: graphic.attributes.powerAttachment || '',
+				domPowerPhase: graphic.attributes.domPowerPhase || '',
+				domPowerEquipment: graphic.attributes.domPowerEquipment || '',
+				domPowerLaterals: graphic.attributes.domPowerLaterals || '',
+				cityPowerPhase: graphic.attributes.cityPowerPhase || '',
+				cityPowerEquipment: graphic.attributes.cityPowerEquipment || '',
+				cityPowerLaterals: graphic.attributes.cityPowerLaterals || '',
 				utilityAttachments:
 					typeof graphic.attributes.utilityAttachments === 'string'
 						? JSON.parse(graphic.attributes.utilityAttachments)
@@ -57,7 +65,7 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 			...prevPointDescription,
 			utilityAttachments: [
 				...prevPointDescription.utilityAttachments,
-				{ utilityOwner: '', spliceCase: '' },
+				{ utilityOwner: '', utilityEquipment: '', utilityLaterals: '' },
 			],
 		}));
 	};
@@ -84,66 +92,183 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 					className='modal-form'
 					onSubmit={handleSubmit}
 				>
-					<label>
-						Pole Number:
-						<input
-							type='text'
-							name='poleNumber'
-							value={pointDescription.poleNumber}
-							onChange={handleChange}
-						/>
-					</label>
-					<label>
-						Pole Owner:
-						<input
-							type='text'
-							name='poleOwner'
-							value={pointDescription.poleOwner}
-							onChange={handleChange}
-						/>
-					</label>
-					<label>
-						Power Phase:
-						<input
-							type='text'
-							name='powerPhase'
-							value={pointDescription.powerPhase}
-							onChange={handleChange}
-						/>
-					</label>
-					<label>
-						Power Attachment:
-						<input
-							type='text'
-							name='powerAttachment'
-							value={pointDescription.powerAttachment}
-							onChange={handleChange}
-						/>
-					</label>
-					{pointDescription.utilityAttachments.map(
-						(attachment, index) => (
-							<div key={index}>
-								<label>
-									Utility Owner {index + 1}:
-									<input
-										type='text'
-										name={`utilityAttachments.${index}.utilityOwner`}
-										value={attachment.utilityOwner}
-										onChange={handleChange}
-									/>
-								</label>
-								<label>
-									Splice Case {index + 1}:
-									<input
-										type='text'
-										name={`utilityAttachments.${index}.spliceCase`}
-										value={attachment.spliceCase}
-										onChange={handleChange}
-									/>
-								</label>
-							</div>
-						)
-					)}
+					<div
+						style={{
+							display: 'flex',
+							flexDirection: 'column',
+							alignItems: 'center',
+						}}
+					>
+						<h3>Pole Information</h3>
+						<table id='customers'>
+							<thead>
+								<tr>
+									<th>Pole Number</th>
+									<th>Pole Owner</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>
+										<input
+											type='text'
+											name='poleNumber'
+											value={pointDescription.poleNumber}
+											onChange={handleChange}
+										/>
+									</td>
+									<td>
+										<input
+											type='text'
+											name='poleOwner'
+											value={pointDescription.poleOwner}
+											onChange={handleChange}
+										/>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+
+						<h3>Dominion Power</h3>
+						<table id='customers'>
+							<thead>
+								<tr>
+									<th>Power Phase</th>
+									<th>Equipment</th>
+									<th>Power Laterals</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>
+										<input
+											type='text'
+											name='domPowerPhase'
+											value={
+												pointDescription.domPowerPhase
+											}
+											onChange={handleChange}
+										/>
+									</td>
+									<td>
+										<input
+											type='text'
+											name='domPowerEquipment'
+											value={
+												pointDescription.domPowerEquipment
+											}
+											onChange={handleChange}
+										/>
+									</td>
+									<td>
+										<input
+											type='text'
+											name='domPowerLaterals'
+											value={
+												pointDescription.domPowerLaterals
+											}
+											onChange={handleChange}
+										/>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+
+						<h3>City Power</h3>
+						<table id='customers'>
+							<thead>
+								<tr>
+									<th>Power Phase</th>
+									<th>Equipment</th>
+									<th>Power Laterals</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>
+										<input
+											type='text'
+											name='cityPowerPhase'
+											value={
+												pointDescription.cityPowerPhase
+											}
+											onChange={handleChange}
+										/>
+									</td>
+									<td>
+										<input
+											type='text'
+											name='cityPowerEquipment'
+											value={
+												pointDescription.cityPowerEquipment
+											}
+											onChange={handleChange}
+										/>
+									</td>
+									<td>
+										<input
+											type='text'
+											name='cityPowerLaterals'
+											value={
+												pointDescription.cityPowerLaterals
+											}
+											onChange={handleChange}
+										/>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+						<br />
+						<h3>Utilities</h3>
+
+						<table id='customers'>
+							<thead>
+								<tr>
+									<th>Utility Owner</th>
+									<th>Equipment</th>
+									<th>Laterals</th>
+								</tr>
+							</thead>
+							{pointDescription.utilityAttachments.map(
+								(attachment, index) => (
+									<tbody key={index}>
+										<tr>
+											<td>
+												<input
+													type='text'
+													name={`utilityAttachments.${index}.utilityOwner`}
+													value={
+														attachment.utilityOwner
+													}
+													onChange={handleChange}
+												/>
+											</td>
+											<td>
+												<input
+													type='text'
+													name={`utilityAttachments.${index}.utilityEquipment`}
+													value={
+														attachment.utilityEquipment
+													}
+													onChange={handleChange}
+												/>
+											</td>
+											<td>
+												<input
+													type='text'
+													name={`utilityAttachments.${index}.utilityLaterals`}
+													value={
+														attachment.utilityLaterals
+													}
+													onChange={handleChange}
+												/>
+											</td>
+										</tr>
+									</tbody>
+								)
+							)}
+						</table>
+					</div>
 					<button
 						type='button'
 						onClick={handleAddAttachment}

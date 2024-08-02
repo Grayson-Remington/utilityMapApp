@@ -23,7 +23,7 @@ const imageOptions = [
 	// Add more images here
 ];
 
-const MapComponent = () => {
+function UnAuthMapComponent({ onLoginSuccess }) {
 	const mapDiv = useRef(null);
 	const viewRef = useRef(null);
 	const editorRef = useRef(null);
@@ -32,6 +32,13 @@ const MapComponent = () => {
 	const [editorState, setEditorState] = useState('');
 	const [showPointForm, setShowPointForm] = useState(false);
 	const [showPolylineForm, setShowPolylineForm] = useState(false);
+
+	const [password, setPassword] = useState('');
+
+	const handlePasswordSubmit = async (event) => {
+		event.preventDefault();
+		if (password.toUpperCase() == 'DU') onLoginSuccess();
+	};
 
 	const getPointDescription = (graphic) => {
 		return new Promise((resolve, reject) => {
@@ -74,26 +81,6 @@ const MapComponent = () => {
 	let isProgrammaticEdit = false;
 	useEffect(() => {
 		if (mapDiv.current) {
-			const pointEditThisAction = {
-				title: 'Edit feature',
-				id: 'point-edit-this',
-				className: 'esri-icon-edit',
-			};
-			const pointDeleteThisAction = {
-				title: 'Delete feature',
-				id: 'point-delete-this',
-				className: 'esri-icon-trash',
-			};
-			const polylineEditThisAction = {
-				title: 'Edit feature',
-				id: 'polyline-edit-this',
-				className: 'esri-icon-edit',
-			};
-			const polylineDeleteThisAction = {
-				title: 'Delete feature',
-				id: 'polyline-delete-this',
-				className: 'esri-icon-trash',
-			};
 			const pointSymbol = {
 				type: 'picture-marker',
 				url: imageOptions[0].url, // Use the selected image URL
@@ -342,7 +329,7 @@ const MapComponent = () => {
 				spatialReference: { wkid: 4326 }, // Set your spatial reference
 				popupTemplate: {
 					title: `{poleNumber}`,
-					actions: [pointEditThisAction, pointDeleteThisAction],
+					actions: [],
 					content: pointPopupContent,
 				},
 				renderer: renderer,
@@ -390,7 +377,7 @@ const MapComponent = () => {
 				spatialReference: { wkid: 4326 }, // Set your spatial reference
 				popupTemplate: {
 					title: 'Polyline',
-					actions: [polylineEditThisAction, polylineDeleteThisAction], // Define actions if needed
+					actions: [], // Define actions if needed
 					content: polylinePopupContent, // Define content for the popup
 				},
 				renderer: polylineRenderer, // Define your renderer as needed
@@ -506,61 +493,6 @@ const MapComponent = () => {
 			});
 
 			viewRef.current = view;
-			const editor = new Editor({
-				view: view,
-				snappingOptions: {
-					enabled: true,
-					featureSources: [
-						{ layer: pointLayer, enabled: true },
-						{ layer: polylineLayer, enabled: true },
-					],
-				},
-				layerInfos: [
-					{
-						layer: pointLayer,
-						title: 'NCNG MOS Vacancy',
-						formTemplate: {
-							// autocastable to FormTemplate
-							elements: [
-								{
-									// autocastable to FieldElement
-									type: 'field',
-									fieldName: 'poleNumber',
-									label: 'Pole Number',
-								},
-								{
-									type: 'field',
-									fieldName: 'poleOwner',
-									label: 'Pole Owner',
-									input: {
-										type: 'radio-buttons',
-										showNoValueOption: false,
-									},
-								},
-							],
-						},
-					},
-					{
-						layer: polylineLayer,
-						formTemplate: {
-							// autocastable to FormTemplate
-							elements: [
-								{
-									// autocastable to FieldElement
-									type: 'field',
-									fieldName: 'domPowerPhase',
-									label: 'Full Address',
-								},
-								{
-									type: 'field',
-									fieldName: 'cityPowerPhase',
-									label: 'Power Phase',
-								},
-							],
-						},
-					},
-				],
-			});
 
 			function refreshPopup() {
 				// Get the currently selected feature
@@ -578,174 +510,11 @@ const MapComponent = () => {
 			}
 
 			// Fires when feature is created in the Point Layer
-			pointLayer.on('apply-edits', function (event) {
-				console.log(event);
-				console.log(pointLayer);
-				event.result
-					.then(async (result) => {
-						// Call the function to check for features
-
-						console.log('result', result);
-						console.log(editorState);
-						if (
-							result.edits.addFeatures.length > 0 &&
-							isProgrammaticEdit
-						) {
-							console.log(
-								'Graphic added to the FeatureLayer',
-								result.edits.addFeatures[0]
-							);
-							let graphic = result.edits.addFeatures[0];
-							graphic.layer = pointLayer;
-							graphic.attributes.id = uuidv4();
-							pointLayer
-								.applyEdits({
-									updateFeatures: [graphic],
-								})
-								.then(async (result) => {
-									if (
-										result.updateFeatureResults.length > 0
-									) {
-										console.log(
-											'Features updated successfully',
-											result.updateFeatureResults
-										);
-										console.log(
-											'graphic of interest',
-											graphic
-										);
-										const data = {
-											graphic: JSON.stringify({
-												graphic,
-											}),
-											graphic_id: graphic.attributes.id, // Replace with your actual graphic_id
-										};
-										console.log('first created data', data);
-										try {
-											const response = await axios.post(
-												`${process.env.DATABASE_URL}/points`,
-												data
-											);
-											console.log(
-												'Response from server:',
-												response.data
-											);
-										} catch (error) {
-											console.error(
-												'Error posting point:',
-												error
-											);
-										}
-										// Your custom logic here
-									}
-								})
-								.catch((error) => {
-									console.error(
-										'Error updating features:',
-										error
-									);
-								});
-						}
-					})
-					.catch((error) => {
-						console.error('Error applying edits:', error);
-					});
-			});
-			polylineLayer.on('apply-edits', function (event) {
-				console.log(event);
-				console.log(polylineLayer);
-				event.result
-					.then(async (result) => {
-						// Call the function to check for features
-
-						console.log('result', result);
-						console.log(editorState);
-						if (
-							result.edits.addFeatures.length > 0 &&
-							isProgrammaticEdit
-						) {
-							console.log(
-								'Graphic added to the FeatureLayer',
-								result.edits.addFeatures[0]
-							);
-							let graphic = result.edits.addFeatures[0];
-							graphic.layer = pointLayer;
-							graphic.attributes.id = uuidv4();
-							polylineLayer
-								.applyEdits({
-									updateFeatures: [graphic],
-								})
-								.then(async (result) => {
-									if (
-										result.updateFeatureResults.length > 0
-									) {
-										console.log(
-											'Features updated successfully',
-											result.updateFeatureResults
-										);
-										console.log(
-											'graphic of interest',
-											graphic
-										);
-										const data = {
-											graphic: JSON.stringify({
-												graphic,
-											}),
-											graphic_id: graphic.attributes.id, // Replace with your actual graphic_id
-										};
-										console.log('first created data', data);
-										try {
-											const response = await axios.post(
-												`${process.env.DATABASE_URL}/polylines`,
-												data
-											);
-											console.log(
-												'Response from server:',
-												response.data
-											);
-										} catch (error) {
-											console.error(
-												'Error posting polyline:',
-												error
-											);
-										}
-										// Your custom logic here
-									}
-								})
-								.catch((error) => {
-									console.error(
-										'Error updating features:',
-										error
-									);
-								});
-						}
-					})
-					.catch((error) => {
-						console.error('Error applying edits:', error);
-					});
-			});
-			let editorVM = editor.viewModel;
-			console.log(editorVM);
-			editorVM.watch('state', (state) => {
-				if (state == 'creating-features') {
-					isProgrammaticEdit = true;
-				} else {
-					isProgrammaticEdit = false;
-				}
-
-				console.log('state', state);
-				if (state === 'editing-existing-feature') {
-					refreshPopup();
-					console.log(state);
-				} else if (state === 'creating-features') {
-				}
-			});
 
 			var search = new Search({
 				view: view,
 			});
 
-			view.ui.add(editor, 'top-right');
 			view.ui.add(search, {
 				position: 'top-left',
 			});
@@ -758,287 +527,20 @@ const MapComponent = () => {
 					}
 				);
 			});
-			view.when(() => {
-				reactiveUtils.on(
-					() => view.popup,
-					'trigger-action',
-					async (event) => {
-						if (event.action.id === 'point-edit-this') {
-							const selectedFeature = view.popup.selectedFeature;
-							// editor.startUpdateWorkflowAtFeatureEdit(
-							// 	view.popup.selectedFeature
-							// );
-							console.log('selected Feature', selectedFeature);
-							const description = await getPointDescription(
-								selectedFeature
-							);
-							selectedFeature.attributes = {
-								...selectedFeature.attributes,
-								...description,
-								utilityAttachments:
-									description.utilityAttachments,
-							};
-							const updatedFeature = JSON.stringify({
-								graphic: selectedFeature,
-							});
-
-							const data = {
-								graphic: updatedFeature,
-
-								graphic_id: selectedFeature.attributes.id,
-							};
-							console.log('updated data', data);
-							try {
-								const response = await axios.post(
-									`${process.env.DATABASE_URL}/update-point`,
-									data
-								);
-								console.log(
-									'Response from server:',
-									response.data
-								);
-							} catch (error) {
-								console.error('Error posting point:', error);
-							}
-							// Apply the edits
-							const editResult = await selectedFeature.layer
-								.applyEdits({
-									updateFeatures: [selectedFeature],
-								})
-								.then(async (result) => {
-									refreshPopup();
-								})
-								.catch((error) => {
-									console.error(
-										'Error updating features:',
-										error
-									);
-								});
-
-							if (editResult.updateFeatureResults.length > 0) {
-								console.log(
-									'Feature updated successfully:',
-									editResult.updateFeatureResults
-								);
-								refreshPopup();
-							} else {
-								console.error(
-									'Failed to update feature:',
-									editResult
-								);
-							}
-						}
-					}
-				);
-			});
-			view.when(() => {
-				reactiveUtils.on(
-					() => view.popup,
-					'trigger-action',
-					async (event) => {
-						if (event.action.id === 'polyline-edit-this') {
-							const selectedFeature = view.popup.selectedFeature;
-							// editor.startUpdateWorkflowAtFeatureEdit(
-							// 	view.popup.selectedFeature
-							// );
-							console.log('selected Feature', selectedFeature);
-							const description = await getPolylineDescription(
-								selectedFeature
-							);
-							selectedFeature.attributes = {
-								...selectedFeature.attributes,
-								...description,
-								utilityAttachments:
-									description.utilityAttachments,
-							};
-							const updatedFeature = JSON.stringify({
-								graphic: selectedFeature,
-							});
-
-							const data = {
-								graphic: updatedFeature,
-
-								graphic_id: selectedFeature.attributes.id,
-							};
-							console.log('updated data', data);
-							try {
-								const response = await axios.post(
-									`${process.env.DATABASE_URL}/update-polyline`,
-									data
-								);
-								console.log(
-									'Response from server:',
-									response.data
-								);
-							} catch (error) {
-								console.error('Error posting point:', error);
-							}
-							// Apply the edits
-							const editResult = await selectedFeature.layer
-								.applyEdits({
-									updateFeatures: [selectedFeature],
-								})
-								.then(async (result) => {
-									console.log('hello');
-									refreshPopup();
-								})
-								.catch((error) => {
-									console.error(
-										'Error updating features:',
-										error
-									);
-								});
-
-							if (editResult.updateFeatureResults.length > 0) {
-								console.log(
-									'Feature updated successfully:',
-									editResult.updateFeatureResults
-								);
-								refreshPopup();
-							} else {
-								console.error(
-									'Failed to update feature:',
-									editResult
-								);
-							}
-						}
-					}
-				);
-			});
-			view.when(() => {
-				reactiveUtils.on(
-					() => view.popup,
-					'trigger-action',
-					async (event) => {
-						if (event.action.id === 'point-delete-this') {
-							const selectedFeature = view.popup.selectedFeature;
-							// editor.startUpdateWorkflowAtFeatureEdit(
-							// 	view.popup.selectedFeature
-							// );
-							console.log('selected Feature', selectedFeature);
-
-							const updatedFeature = JSON.stringify({
-								graphic: selectedFeature,
-							});
-
-							const data = {
-								graphic: updatedFeature,
-
-								graphic_id: selectedFeature.attributes.id,
-							};
-							console.log('updated data', data);
-							try {
-								const response = await axios.delete(
-									`${process.env.DATABASE_URL}/points/${selectedFeature.attributes.id}`
-								);
-								console.log(
-									'Response from server:',
-									response.data
-								);
-							} catch (error) {
-								console.error('Error posting point:', error);
-							}
-							// Apply the edits
-							const editResult = await selectedFeature.layer
-								.applyEdits({
-									deleteFeatures: [selectedFeature],
-								})
-								.then(async (result) => {
-									refreshPopup();
-								})
-								.catch((error) => {
-									console.error(
-										'Error updating features:',
-										error
-									);
-								});
-
-							if (editResult.updateFeatureResults.length > 0) {
-								console.log(
-									'Feature updated successfully:',
-									editResult.updateFeatureResults
-								);
-								refreshPopup();
-							} else {
-								console.error(
-									'Failed to update feature:',
-									editResult
-								);
-							}
-						}
-					}
-				);
-			});
-			view.when(() => {
-				reactiveUtils.on(
-					() => view.popup,
-					'trigger-action',
-					async (event) => {
-						if (event.action.id === 'polyline-delete-this') {
-							const selectedFeature = view.popup.selectedFeature;
-							// editor.startUpdateWorkflowAtFeatureEdit(
-							// 	view.popup.selectedFeature
-							// );
-							console.log('selected Feature', selectedFeature);
-
-							const updatedFeature = JSON.stringify({
-								graphic: selectedFeature,
-							});
-
-							const data = {
-								graphic: updatedFeature,
-
-								graphic_id: selectedFeature.attributes.id,
-							};
-							console.log('updated data', data);
-							try {
-								const response = await axios.delete(
-									`${process.env.DATABASE_URL}/polylines/${selectedFeature.attributes.id}`
-								);
-								console.log(
-									'Response from server:',
-									response.data
-								);
-							} catch (error) {
-								console.error('Error posting point:', error);
-							}
-							// Apply the edits
-							const editResult = await selectedFeature.layer
-								.applyEdits({
-									deleteFeatures: [selectedFeature],
-								})
-								.then(async (result) => {
-									result.preventDefault();
-									refreshPopup();
-								})
-								.catch((error) => {
-									console.error(
-										'Error updating features:',
-										error
-									);
-								});
-
-							if (editResult.updateFeatureResults.length > 0) {
-								console.log(
-									'Feature updated successfully:',
-									editResult.updateFeatureResults
-								);
-								refreshPopup();
-							} else {
-								console.error(
-									'Failed to update feature:',
-									editResult
-								);
-							}
-						}
-					}
-				);
-			});
 		}
 	}, []);
 
 	return (
 		<>
+			<form onSubmit={handlePasswordSubmit}>
+				<input
+					type='password'
+					placeholder='Password'
+					value={password}
+					onChange={(e) => setPassword(e.target.value)}
+				/>
+				<button type='submit'>Login</button>
+			</form>
 			{showPointForm && (
 				<PointDescriptionForm
 					onSubmit={showPointForm.onSubmit}
@@ -1059,6 +561,6 @@ const MapComponent = () => {
 			></div>
 		</>
 	);
-};
+}
 
-export default MapComponent;
+export default UnAuthMapComponent;

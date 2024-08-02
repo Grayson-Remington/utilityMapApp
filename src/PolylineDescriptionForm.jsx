@@ -3,21 +3,25 @@ import './PolylineDescriptionForm.css';
 const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 	console.log(graphic);
 	const [polylineDescription, setPolylineDescription] = useState({
-		poleNumber: '',
-		poleOwner: '',
-		powerPhase: '',
-		powerAttachment: '',
-		utilityAttachments: [{ utilityOwner: 'Verizon', spliceCase: 'yes' }],
+		domPowerPhase: '',
+		cityPowerPhase: '',
+		cityPowerLaterals: '',
+		utilityAttachments: [
+			{
+				utilityOwner: 'Verizon',
+				utilityEquipment: 'yes',
+				utilityLaterals: '',
+			},
+		],
 	});
 
 	useEffect(() => {
 		if (graphic.attributes) {
 			console.log('Graphic received:', graphic); // Log graphic to verify
 			setPolylineDescription({
-				poleNumber: graphic.attributes.poleNumber || '',
-				poleOwner: graphic.attributes.poleOwner || '',
-				powerPhase: graphic.attributes.powerPhase || '',
-				powerAttachment: graphic.attributes.powerAttachment || '',
+				domPowerPhase: graphic.attributes.domPowerPhase || '',
+				cityPowerPhase: graphic.attributes.cityPowerPhase || '',
+				cityPowerLaterals: graphic.attributes.cityPowerLaterals || '',
 				utilityAttachments:
 					typeof graphic.attributes.utilityAttachments === 'string'
 						? JSON.parse(graphic.attributes.utilityAttachments)
@@ -81,66 +85,108 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 					className='modal-form'
 					onSubmit={handleSubmit}
 				>
-					<label>
-						Polyline Number:
-						<input
-							type='text'
-							name='poleNumber'
-							value={polylineDescription.poleNumber}
-							onChange={handleChange}
-						/>
-					</label>
-					<label>
-						Pole Owner:
-						<input
-							type='text'
-							name='poleOwner'
-							value={polylineDescription.poleOwner}
-							onChange={handleChange}
-						/>
-					</label>
-					<label>
-						Power Phase:
-						<input
-							type='text'
-							name='powerPhase'
-							value={polylineDescription.powerPhase}
-							onChange={handleChange}
-						/>
-					</label>
-					<label>
-						Power Attachment:
-						<input
-							type='text'
-							name='powerAttachment'
-							value={polylineDescription.powerAttachment}
-							onChange={handleChange}
-						/>
-					</label>
-					{polylineDescription.utilityAttachments.map(
-						(attachment, index) => (
-							<div key={index}>
-								<label>
-									Utility Owner {index + 1}:
-									<input
-										type='text'
-										name={`utilityAttachments.${index}.utilityOwner`}
-										value={attachment.utilityOwner}
-										onChange={handleChange}
-									/>
-								</label>
-								<label>
-									Splice Case {index + 1}:
-									<input
-										type='text'
-										name={`utilityAttachments.${index}.spliceCase`}
-										value={attachment.spliceCase}
-										onChange={handleChange}
-									/>
-								</label>
-							</div>
-						)
-					)}
+					<div
+						style={{
+							display: 'flex',
+							flexDirection: 'column',
+							alignItems: 'center',
+						}}
+					>
+						<h3>Pole Information</h3>
+						<table id='customers'>
+							<thead>
+								<tr>
+									<th>Dominion Power Phase</th>
+									<th>City Power Phase</th>
+									<th>City Power Laterals</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>
+										<input
+											type='text'
+											name='domPowerPhase'
+											value={
+												polylineDescription.domPowerPhase
+											}
+											onChange={handleChange}
+										/>
+									</td>
+									<td>
+										<input
+											type='text'
+											name='cityPowerPhase'
+											value={
+												polylineDescription.cityPowerPhase
+											}
+											onChange={handleChange}
+										/>
+									</td>
+									<td>
+										<input
+											type='text'
+											name='cityPowerLaterals'
+											value={
+												polylineDescription.cityPowerLaterals
+											}
+											onChange={handleChange}
+										/>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+
+						<h3>Utilities</h3>
+
+						<table id='customers'>
+							<thead>
+								<tr>
+									<th>Utility Owner</th>
+									<th>Equipment</th>
+									<th>Laterals</th>
+								</tr>
+							</thead>
+							{polylineDescription.utilityAttachments.map(
+								(attachment, index) => (
+									<tbody key={index}>
+										<tr>
+											<td>
+												<input
+													type='text'
+													name={`utilityAttachments.${index}.utilityOwner`}
+													value={
+														attachment.utilityOwner
+													}
+													onChange={handleChange}
+												/>
+											</td>
+											<td>
+												<input
+													type='text'
+													name={`utilityAttachments.${index}.utilityEquipment`}
+													value={
+														attachment.utilityEquipment
+													}
+													onChange={handleChange}
+												/>
+											</td>
+											<td>
+												<input
+													type='text'
+													name={`utilityAttachments.${index}.utilityLaterals`}
+													value={
+														attachment.utilityLaterals
+													}
+													onChange={handleChange}
+												/>
+											</td>
+										</tr>
+									</tbody>
+								)
+							)}
+						</table>
+					</div>
 					<button
 						type='button'
 						onClick={handleAddAttachment}
