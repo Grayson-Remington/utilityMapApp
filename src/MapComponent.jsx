@@ -532,10 +532,6 @@ const MapComponent = () => {
 									type: 'field',
 									fieldName: 'poleOwner',
 									label: 'Pole Owner',
-									input: {
-										type: 'radio-buttons',
-										showNoValueOption: false,
-									},
 								},
 							],
 						},
@@ -549,12 +545,12 @@ const MapComponent = () => {
 									// autocastable to FieldElement
 									type: 'field',
 									fieldName: 'domPowerPhase',
-									label: 'Full Address',
+									label: 'Dominion Power Phase',
 								},
 								{
 									type: 'field',
 									fieldName: 'cityPowerPhase',
-									label: 'Power Phase',
+									label: 'City Power Phase',
 								},
 							],
 						},
