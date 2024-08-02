@@ -221,7 +221,8 @@ function UnAuthMapComponent({ onLoginSuccess }) {
 				// 	 `;
 				div.innerHTML = `
 				<div style="display: flex; flex-direction: column; align-items: center;">
-				<h3>Pole Information</h3>
+				
+				<h3>Power</h3>
 					   <table id="customers">
   <tr>
     <th>Dominion Power Phase</th>
