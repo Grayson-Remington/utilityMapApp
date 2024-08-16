@@ -1,28 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import './PolylineDescriptionForm.css';
-const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
-	console.log(graphic);
-	const [polylineDescription, setPolylineDescription] = useState({
+import './GroundFeatureDescriptionForm.css';
+
+const GroundFeatureDescriptionForm = ({ onSubmit, onClose, graphic }) => {
+	console.log('graphic submitted', graphic);
+	const [groundFeatureDescription, setGroundFeatureDescription] = useState({
 		utilityType: '',
+		groundFeatureType: '',
+		poleNumber: '',
+		poleOwner: '',
 		domPowerPhase: '',
+		domPowerEquipment: '',
+		domPowerLaterals: '',
 		cityPowerPhase: '',
+		cityPowerEquipment: '',
 		cityPowerLaterals: '',
-		utilityAttachments: [
-			{
-				utilityOwner: '',
-				utilityEquipment: '',
-				utilityLaterals: '',
-			},
-		],
+		utilityAttachments: [],
 	});
 
 	useEffect(() => {
 		if (graphic.attributes) {
 			console.log('Graphic received:', graphic); // Log graphic to verify
-			setPolylineDescription({
+			setGroundFeatureDescription({
 				utilityType: graphic.attributes.utilityType || '',
+				groundFeatureType: graphic.attributes.groundFeatureType || '',
+				poleNumber: graphic.attributes.poleNumber || '',
+				poleOwner: graphic.attributes.poleOwner || '',
 				domPowerPhase: graphic.attributes.domPowerPhase || '',
+				domPowerEquipment: graphic.attributes.domPowerEquipment || '',
+				domPowerLaterals: graphic.attributes.domPowerLaterals || '',
 				cityPowerPhase: graphic.attributes.cityPowerPhase || '',
+				cityPowerEquipment: graphic.attributes.cityPowerEquipment || '',
 				cityPowerLaterals: graphic.attributes.cityPowerLaterals || '',
 				utilityAttachments:
 					typeof graphic.attributes.utilityAttachments === 'string'
@@ -36,47 +43,47 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 		const { name, value } = event.target;
 		if (name.startsWith('utilityAttachments')) {
 			const [_, index, key] = name.split('.');
-			setPolylineDescription((prevPolylineDescription) => {
+			setGroundFeatureDescription((prevGroundFeatureDescription) => {
 				const newUtilityAttachments = [
-					...prevPolylineDescription.utilityAttachments,
+					...prevGroundFeatureDescription.utilityAttachments,
 				];
 				newUtilityAttachments[index] = {
 					...newUtilityAttachments[index],
 					[key]: value,
 				};
 				return {
-					...prevPolylineDescription,
+					...prevGroundFeatureDescription,
 					utilityAttachments: newUtilityAttachments,
 				};
 			});
 		} else {
-			setPolylineDescription((prevPolylineDescription) => ({
-				...prevPolylineDescription,
+			setGroundFeatureDescription((prevGroundFeatureDescription) => ({
+				...prevGroundFeatureDescription,
 				[name]: value,
 			}));
 		}
 	};
+
 	const handleAddAttachment = () => {
-		setPolylineDescription((prevPolylineDescription) => ({
-			...prevPolylineDescription,
+		setGroundFeatureDescription((prevGroundFeatureDescription) => ({
+			...prevGroundFeatureDescription,
 			utilityAttachments: [
-				...prevPolylineDescription.utilityAttachments,
-				{ utilityOwner: '', spliceCase: '' },
+				...prevGroundFeatureDescription.utilityAttachments,
+				{ utilityOwner: '', utilityEquipment: '', utilityLaterals: '' },
 			],
 		}));
 	};
-
 	const handleDeleteAttachment = (index) => {
-		setPolylineDescription((prevPolylineDescription) => {
+		setGroundFeatureDescription((prevGroundFeatureDescription) => {
 			// Create a copy of the current utilityAttachments array
 			const newAttachments = [
-				...prevPolylineDescription.utilityAttachments,
+				...prevGroundFeatureDescription.utilityAttachments,
 			];
 			// Remove the attachment at the specified index
 			newAttachments.splice(index, 1);
 			// Return the new state with the updated utilityAttachments array
 			return {
-				...prevPolylineDescription,
+				...prevGroundFeatureDescription,
 				utilityAttachments: newAttachments,
 			};
 		});
@@ -84,16 +91,16 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 	const handleSubmit = (event) => {
 		event.preventDefault();
 
-		// Create a new polylineDescription object
-		const updatedPolylineDescription = {
-			...polylineDescription, // Spread existing properties
+		// Create a new groundFeatureDescription object
+		const updatedGroundFeatureDescription = {
+			...groundFeatureDescription, // Spread existing properties
 			utilityAttachments: JSON.stringify(
-				polylineDescription.utilityAttachments
+				groundFeatureDescription.utilityAttachments
 			), // Update utilityAttachments
 		};
 
 		// Call onSubmit with the updated object
-		onSubmit(updatedPolylineDescription);
+		onSubmit(updatedGroundFeatureDescription);
 	};
 
 	return (
@@ -114,9 +121,43 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 						<table id='customers'>
 							<thead>
 								<tr>
-									<th>Dominion Power Phase</th>
-									<th>City Power Phase</th>
-									<th>City Power Laterals</th>
+									<th>Pole Number</th>
+									<th>Pole Owner</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>
+										<input
+											type='text'
+											name='poleNumber'
+											value={
+												groundFeatureDescription.poleNumber
+											}
+											onChange={handleChange}
+										/>
+									</td>
+									<td>
+										<input
+											type='text'
+											name='poleOwner'
+											value={
+												groundFeatureDescription.poleOwner
+											}
+											onChange={handleChange}
+										/>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+
+						<h3>Dominion Power</h3>
+						<table id='customers'>
+							<thead>
+								<tr>
+									<th>Power Phase</th>
+									<th>Equipment</th>
+									<th>Power Laterals</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -126,7 +167,7 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 											type='text'
 											name='domPowerPhase'
 											value={
-												polylineDescription.domPowerPhase
+												groundFeatureDescription.domPowerPhase
 											}
 											onChange={handleChange}
 										/>
@@ -134,9 +175,54 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 									<td>
 										<input
 											type='text'
+											name='domPowerEquipment'
+											value={
+												groundFeatureDescription.domPowerEquipment
+											}
+											onChange={handleChange}
+										/>
+									</td>
+									<td>
+										<input
+											type='text'
+											name='domPowerLaterals'
+											value={
+												groundFeatureDescription.domPowerLaterals
+											}
+											onChange={handleChange}
+										/>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+
+						<h3>City Power</h3>
+						<table id='customers'>
+							<thead>
+								<tr>
+									<th>Power Phase</th>
+									<th>Equipment</th>
+									<th>Power Laterals</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>
+										<input
+											type='text'
 											name='cityPowerPhase'
 											value={
-												polylineDescription.cityPowerPhase
+												groundFeatureDescription.cityPowerPhase
+											}
+											onChange={handleChange}
+										/>
+									</td>
+									<td>
+										<input
+											type='text'
+											name='cityPowerEquipment'
+											value={
+												groundFeatureDescription.cityPowerEquipment
 											}
 											onChange={handleChange}
 										/>
@@ -146,7 +232,7 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 											type='text'
 											name='cityPowerLaterals'
 											value={
-												polylineDescription.cityPowerLaterals
+												groundFeatureDescription.cityPowerLaterals
 											}
 											onChange={handleChange}
 										/>
@@ -154,7 +240,7 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 								</tr>
 							</tbody>
 						</table>
-
+						<br />
 						<h3>Utilities</h3>
 
 						<table id='customers'>
@@ -172,7 +258,7 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 									<th></th>
 								</tr>
 							</thead>
-							{polylineDescription.utilityAttachments.map(
+							{groundFeatureDescription.utilityAttachments.map(
 								(attachment, index) => (
 									<tbody key={index}>
 										<tr>
@@ -243,4 +329,4 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 	);
 };
 
-export default PolylineDescriptionForm;
+export default GroundFeatureDescriptionForm;

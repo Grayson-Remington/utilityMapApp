@@ -1,0 +1,12 @@
+Features
+
+- Laterals
+  - Lateral Layer?
+  - Visible at a smaller distance?
+  -
+
+
+- Layer List where you can hide layers?
+- Legend that tells what each color is
+- Export to a Shapefile
+- 

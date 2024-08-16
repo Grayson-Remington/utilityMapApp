@@ -1,4 +1,4 @@
-# ArcGIS Maps SDK for JavaScript with React using Vite
+<!-- # ArcGIS Maps SDK for JavaScript with React using Vite
 
 This sample demonstrates how to use [@arcgis/core](https://www.npmjs.com/package/@arcgis/core) ES modules with [React](https://reactjs.org/).
 
@@ -14,4 +14,10 @@ For additional information, see the [Get started with npm](https://developers.ar
 
 You can learn more in the [Vite guides](https://vitejs.dev/guide/).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+To learn React, check out the [React documentation](https://reactjs.org/). -->
+
+Features to Add:
+
+-   Laterals
+-   Legend
+-   Color-coded lines and symbols

@@ -1,25 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import './PolylineDescriptionForm.css';
-const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
+import './UndergroundLineDescriptionForm.css';
+const UndergroundLineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 	console.log(graphic);
-	const [polylineDescription, setPolylineDescription] = useState({
-		utilityType: '',
-		domPowerPhase: '',
-		cityPowerPhase: '',
-		cityPowerLaterals: '',
-		utilityAttachments: [
-			{
-				utilityOwner: '',
-				utilityEquipment: '',
-				utilityLaterals: '',
-			},
-		],
-	});
+	const [undergroundLineDescription, setUndergroundLineDescription] =
+		useState({
+			utilityType: '',
+			domPowerPhase: '',
+			cityPowerPhase: '',
+			cityPowerLaterals: '',
+			utilityAttachments: [
+				{
+					utilityOwner: '',
+					utilityEquipment: '',
+					utilityLaterals: '',
+				},
+			],
+		});
 
 	useEffect(() => {
 		if (graphic.attributes) {
 			console.log('Graphic received:', graphic); // Log graphic to verify
-			setPolylineDescription({
+			setUndergroundLineDescription({
 				utilityType: graphic.attributes.utilityType || '',
 				domPowerPhase: graphic.attributes.domPowerPhase || '',
 				cityPowerPhase: graphic.attributes.cityPowerPhase || '',
@@ -36,47 +37,47 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 		const { name, value } = event.target;
 		if (name.startsWith('utilityAttachments')) {
 			const [_, index, key] = name.split('.');
-			setPolylineDescription((prevPolylineDescription) => {
+			setUndergroundLineDescription((prevUndergroundLineDescription) => {
 				const newUtilityAttachments = [
-					...prevPolylineDescription.utilityAttachments,
+					...prevUndergroundLineDescription.utilityAttachments,
 				];
 				newUtilityAttachments[index] = {
 					...newUtilityAttachments[index],
 					[key]: value,
 				};
 				return {
-					...prevPolylineDescription,
+					...prevUndergroundLineDescription,
 					utilityAttachments: newUtilityAttachments,
 				};
 			});
 		} else {
-			setPolylineDescription((prevPolylineDescription) => ({
-				...prevPolylineDescription,
+			setUndergroundLineDescription((prevUndergroundLineDescription) => ({
+				...prevUndergroundLineDescription,
 				[name]: value,
 			}));
 		}
 	};
 	const handleAddAttachment = () => {
-		setPolylineDescription((prevPolylineDescription) => ({
-			...prevPolylineDescription,
+		setUndergroundLineDescription((prevUndergroundLineDescription) => ({
+			...prevUndergroundLineDescription,
 			utilityAttachments: [
-				...prevPolylineDescription.utilityAttachments,
+				...prevUndergroundLineDescription.utilityAttachments,
 				{ utilityOwner: '', spliceCase: '' },
 			],
 		}));
 	};
 
 	const handleDeleteAttachment = (index) => {
-		setPolylineDescription((prevPolylineDescription) => {
+		setUndergroundLineDescription((prevUndergroundLineDescription) => {
 			// Create a copy of the current utilityAttachments array
 			const newAttachments = [
-				...prevPolylineDescription.utilityAttachments,
+				...prevUndergroundLineDescription.utilityAttachments,
 			];
 			// Remove the attachment at the specified index
 			newAttachments.splice(index, 1);
 			// Return the new state with the updated utilityAttachments array
 			return {
-				...prevPolylineDescription,
+				...prevUndergroundLineDescription,
 				utilityAttachments: newAttachments,
 			};
 		});
@@ -84,16 +85,16 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 	const handleSubmit = (event) => {
 		event.preventDefault();
 
-		// Create a new polylineDescription object
-		const updatedPolylineDescription = {
-			...polylineDescription, // Spread existing properties
+		// Create a new undergroundLineDescription object
+		const updatedUndergroundLineDescription = {
+			...undergroundLineDescription, // Spread existing properties
 			utilityAttachments: JSON.stringify(
-				polylineDescription.utilityAttachments
+				undergroundLineDescription.utilityAttachments
 			), // Update utilityAttachments
 		};
 
 		// Call onSubmit with the updated object
-		onSubmit(updatedPolylineDescription);
+		onSubmit(updatedUndergroundLineDescription);
 	};
 
 	return (
@@ -126,7 +127,7 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 											type='text'
 											name='domPowerPhase'
 											value={
-												polylineDescription.domPowerPhase
+												undergroundLineDescription.domPowerPhase
 											}
 											onChange={handleChange}
 										/>
@@ -136,7 +137,7 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 											type='text'
 											name='cityPowerPhase'
 											value={
-												polylineDescription.cityPowerPhase
+												undergroundLineDescription.cityPowerPhase
 											}
 											onChange={handleChange}
 										/>
@@ -146,7 +147,7 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 											type='text'
 											name='cityPowerLaterals'
 											value={
-												polylineDescription.cityPowerLaterals
+												undergroundLineDescription.cityPowerLaterals
 											}
 											onChange={handleChange}
 										/>
@@ -172,7 +173,7 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 									<th></th>
 								</tr>
 							</thead>
-							{polylineDescription.utilityAttachments.map(
+							{undergroundLineDescription.utilityAttachments.map(
 								(attachment, index) => (
 									<tbody key={index}>
 										<tr>
@@ -243,4 +244,4 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 	);
 };
 
-export default PolylineDescriptionForm;
+export default UndergroundLineDescriptionForm;
