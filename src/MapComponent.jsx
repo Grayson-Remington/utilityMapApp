@@ -744,14 +744,14 @@ ${
 								{
 									// lighter green line layer that surrounds the dashes
 									type: 'CIMSolidStroke',
-									effects: [
-										{
-											type: 'CIMGeometricEffectDashes',
-											dashTemplate: [6, 6, 6, 6], // width of dashes and spacing between the dashes
-											lineDashEnding: 'NoConstraint',
-											controlPointEnding: 'NoConstraint',
-										},
-									],
+									// effects: [
+									// 	{
+									// 		type: 'CIMGeometricEffectDashes',
+									// 		dashTemplate: [6, 6, 6, 6], // width of dashes and spacing between the dashes
+									// 		lineDashEnding: 'NoConstraint',
+									// 		controlPointEnding: 'NoConstraint',
+									// 	},
+									// ],
 									enable: true,
 									capStyle: 'Butt',
 									joinStyle: 'Round',

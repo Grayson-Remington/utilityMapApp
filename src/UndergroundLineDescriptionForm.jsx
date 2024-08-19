@@ -104,25 +104,62 @@ const UndergroundLineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 					className='modal-form'
 					onSubmit={handleSubmit}
 				>
-					<div
-						style={{
-							display: 'flex',
-							flexDirection: 'column',
-							alignItems: 'center',
-						}}
-					>
+					<div className='form-container'>
+						{/* Radio buttons for utility type */}
+
+						{/* Pole information */}
 						<h3>Pole Information</h3>
-						<table id='customers'>
-							<thead>
-								<tr>
-									<th>Dominion Power Phase</th>
-									<th>City Power Phase</th>
-									<th>City Power Laterals</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr>
-									<td>
+						<div className='utility-options'>
+							<label>
+								<input
+									type='radio'
+									name='utilityType'
+									value='Power'
+									checked={
+										undergroundLineDescription.utilityType ===
+										'Power'
+									}
+									onChange={handleChange}
+								/>
+								Power
+							</label>
+							<label>
+								<input
+									type='radio'
+									name='utilityType'
+									value='Telco'
+									checked={
+										undergroundLineDescription.utilityType ===
+										'Telco'
+									}
+									onChange={handleChange}
+								/>
+								Telco
+							</label>
+							<label>
+								<input
+									type='radio'
+									name='utilityType'
+									value='Power + Telco'
+									checked={
+										undergroundLineDescription.utilityType ===
+										'Power + Telco'
+									}
+									onChange={handleChange}
+								/>
+								Power + Telco
+							</label>
+						</div>
+
+						{/* Dominion Power - conditionally rendered */}
+						{(undergroundLineDescription.utilityType === 'Power' ||
+							undergroundLineDescription.utilityType ===
+								'Power + Telco') && (
+							<>
+								<h3>Dominion Power</h3>
+								<div className='input-row'>
+									<div className='input-field'>
+										<label>Power Phase</label>
 										<input
 											type='text'
 											name='domPowerPhase'
@@ -131,8 +168,20 @@ const UndergroundLineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 											}
 											onChange={handleChange}
 										/>
-									</td>
-									<td>
+									</div>
+								</div>
+							</>
+						)}
+
+						{/* City Power - conditionally rendered */}
+						{(undergroundLineDescription.utilityType === 'Power' ||
+							undergroundLineDescription.utilityType ===
+								'Power + Telco') && (
+							<>
+								<h3>City Power</h3>
+								<div className='input-row'>
+									<div className='input-field'>
+										<label>Power Phase</label>
 										<input
 											type='text'
 											name='cityPowerPhase'
@@ -141,8 +190,20 @@ const UndergroundLineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 											}
 											onChange={handleChange}
 										/>
-									</td>
-									<td>
+									</div>
+									<div className='input-field'>
+										<label>Equipment</label>
+										<input
+											type='text'
+											name='cityPowerEquipment'
+											value={
+												undergroundLineDescription.cityPowerEquipment
+											}
+											onChange={handleChange}
+										/>
+									</div>
+									<div className='input-field'>
+										<label>Power Laterals</label>
 										<input
 											type='text'
 											name='cityPowerLaterals'
@@ -151,92 +212,98 @@ const UndergroundLineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 											}
 											onChange={handleChange}
 										/>
-									</td>
-								</tr>
-							</tbody>
-						</table>
+									</div>
+								</div>
+							</>
+						)}
 
-						<h3>Utilities</h3>
-
-						<table id='customers'>
-							<colgroup>
-								<col />
-								<col />
-								<col />
-								<col style={{ width: '50px' }} />
-							</colgroup>
-							<thead>
-								<tr>
-									<th>Utility Owner</th>
-									<th>Equipment</th>
-									<th>Laterals</th>
-									<th></th>
-								</tr>
-							</thead>
-							{undergroundLineDescription.utilityAttachments.map(
-								(attachment, index) => (
-									<tbody key={index}>
-										<tr>
-											<td>
-												<input
-													type='text'
-													name={`utilityAttachments.${index}.utilityOwner`}
-													value={
-														attachment.utilityOwner
-													}
-													onChange={handleChange}
-												/>
-											</td>
-											<td>
-												<input
-													type='text'
-													name={`utilityAttachments.${index}.utilityEquipment`}
-													value={
-														attachment.utilityEquipment
-													}
-													onChange={handleChange}
-												/>
-											</td>
-											<td>
-												<input
-													type='text'
-													name={`utilityAttachments.${index}.utilityLaterals`}
-													value={
-														attachment.utilityLaterals
-													}
-													onChange={handleChange}
-												/>
-											</td>
-											<td>
+						{/* Utilities - conditionally rendered */}
+						{(undergroundLineDescription.utilityType === 'Telco' ||
+							undergroundLineDescription.utilityType ===
+								'Power + Telco') && (
+							<>
+								<h3>Utilities</h3>
+								{undergroundLineDescription.utilityAttachments.map(
+									(attachment, index) => (
+										<>
+											<div
+												className='input-row'
+												key={index}
+											>
+												<div
+													style={{
+														textDecoration:
+															'underline',
+													}}
+												>
+													{index + 1}
+												</div>
+												<div className='input-field'>
+													<label>Utility Owner</label>
+													<input
+														type='text'
+														name={`utilityAttachments.${index}.utilityOwner`}
+														value={
+															attachment.utilityOwner
+														}
+														onChange={handleChange}
+													/>
+												</div>
+												<div className='input-field'>
+													<label>Equipment</label>
+													<input
+														type='text'
+														name={`utilityAttachments.${index}.utilityEquipment`}
+														value={
+															attachment.utilityEquipment
+														}
+														onChange={handleChange}
+													/>
+												</div>
+												<div className='input-field'>
+													<label>Laterals</label>
+													<input
+														type='text'
+														name={`utilityAttachments.${index}.utilityLaterals`}
+														value={
+															attachment.utilityLaterals
+														}
+														onChange={handleChange}
+													/>
+												</div>
 												<button
 													className='esri-icon-trash'
+													style={{ height: '30px' }}
 													onClick={() =>
 														handleDeleteAttachment(
 															index
 														)
 													}
 												></button>
-											</td>
-										</tr>
-									</tbody>
-								)
-							)}
-						</table>
-					</div>
-					<button
-						type='button'
-						onClick={handleAddAttachment}
-					>
-						Add Utility Attachment
-					</button>
-					<div className='modal-buttons'>
-						<button type='submit'>Submit</button>
-						<button
-							type='button'
-							onClick={onClose}
-						>
-							Cancel
-						</button>
+											</div>
+										</>
+									)
+								)}
+								<button
+									style={{ width: '100%' }}
+									type='button'
+									onClick={handleAddAttachment}
+								>
+									Add Utility Attachment
+								</button>
+							</>
+						)}
+
+						{/* Form buttons */}
+						<div className='modal-buttons'>
+							<button type='submit'>Submit</button>
+							<button
+								type='button'
+								onClick={onClose}
+							>
+								Cancel
+							</button>
+						</div>
 					</div>
 				</form>
 			</div>
