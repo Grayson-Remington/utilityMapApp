@@ -4,6 +4,7 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 	console.log(graphic);
 	const [polylineDescription, setPolylineDescription] = useState({
 		utilityType: '',
+		lateral: '',
 		domPowerPhase: '',
 		cityPowerPhase: '',
 		cityPowerLaterals: '',
@@ -21,6 +22,7 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 			console.log('Graphic received:', graphic); // Log graphic to verify
 			setPolylineDescription({
 				utilityType: graphic.attributes.utilityType || '',
+				lateral: graphic.attributes.lateral || '',
 				domPowerPhase: graphic.attributes.domPowerPhase || '',
 				cityPowerPhase: graphic.attributes.cityPowerPhase || '',
 				cityPowerLaterals: graphic.attributes.cityPowerLaterals || '',
@@ -33,7 +35,7 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 	}, [graphic]);
 
 	const handleChange = (event) => {
-		const { name, value } = event.target;
+		const { name, value, checked } = event.target;
 		if (name.startsWith('utilityAttachments')) {
 			const [_, index, key] = name.split('.');
 			setPolylineDescription((prevPolylineDescription) => {
@@ -49,6 +51,12 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 					utilityAttachments: newUtilityAttachments,
 				};
 			});
+		} else if (name.startsWith('lateral')) {
+			console.log(checked);
+			setPolylineDescription((prevPolylineDescription) => ({
+				...prevPolylineDescription,
+				[name]: checked ? 'Yes' : 'No',
+			}));
 		} else {
 			setPolylineDescription((prevPolylineDescription) => ({
 				...prevPolylineDescription,
@@ -109,51 +117,47 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 						{/* Pole information */}
 						<h3>Pole Information</h3>
 						<div className='utility-options'>
-							<label>
-								<input
-									type='radio'
-									name='utilityType'
-									value='Power'
-									checked={
-										polylineDescription.utilityType ===
-										'Power'
-									}
-									onChange={handleChange}
-								/>
-								Power
-							</label>
-							<label>
-								<input
-									type='radio'
-									name='utilityType'
-									value='Telco'
-									checked={
-										polylineDescription.utilityType ===
-										'Telco'
-									}
-									onChange={handleChange}
-								/>
-								Telco
-							</label>
-							<label>
-								<input
-									type='radio'
-									name='utilityType'
-									value='Power + Telco'
-									checked={
-										polylineDescription.utilityType ===
-										'Power + Telco'
-									}
-									onChange={handleChange}
-								/>
-								Power + Telco
-							</label>
-						</div>
+							<label htmlFor='utilityType'>Utility Type:</label>
+							<select
+								name='utilityType'
+								value={polylineDescription.utilityType}
+								onChange={handleChange}
+							>
+								<option value='Telco'>Telco</option>
+								<option value='City Power'>City Power</option>
+								<option value='Dom Power'>Dom Power</option>
+								<option value='Dom Power + City Power'>
+									Dom Power + City Power
+								</option>
+								<option value='Dom Power + Telco'>
+									Dom Power + Telco
+								</option>
 
+								<option value='City Power + Telco'>
+									City Power + Telco
+								</option>
+								<option value='Dom Power + City Power + Telco'>
+									Dom Power + City Power + Telco
+								</option>
+							</select>
+						</div>
+						<label>
+							<input
+								type='checkbox'
+								name='lateral'
+								checked={polylineDescription.lateral === 'Yes'}
+								onChange={handleChange}
+							/>
+							Lateral
+						</label>
 						{/* Dominion Power - conditionally rendered */}
-						{(polylineDescription.utilityType === 'Power' ||
+						{(polylineDescription.utilityType === 'Dom Power' ||
 							polylineDescription.utilityType ===
-								'Power + Telco') && (
+								'Dom Power + Telco' ||
+							polylineDescription.utilityType ===
+								'Dom Power + City Power' ||
+							polylineDescription.utilityType ===
+								'Dom Power + City Power + Telco') && (
 							<>
 								<h3>Dominion Power</h3>
 								<div className='input-row'>
@@ -173,9 +177,13 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 						)}
 
 						{/* City Power - conditionally rendered */}
-						{(polylineDescription.utilityType === 'Power' ||
+						{(polylineDescription.utilityType === 'City Power' ||
 							polylineDescription.utilityType ===
-								'Power + Telco') && (
+								'City Power + Telco' ||
+							polylineDescription.utilityType ===
+								'Dom Power + City Power' ||
+							polylineDescription.utilityType ===
+								'Dom Power + City Power + Telco') && (
 							<>
 								<h3>City Power</h3>
 								<div className='input-row'>
@@ -219,7 +227,11 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 						{/* Utilities - conditionally rendered */}
 						{(polylineDescription.utilityType === 'Telco' ||
 							polylineDescription.utilityType ===
-								'Power + Telco') && (
+								'Dom Power + Telco' ||
+							polylineDescription.utilityType ===
+								'City Power + Telco' ||
+							polylineDescription.utilityType ===
+								'Dom Power + City Power + Telco') && (
 							<>
 								<h3>Utilities</h3>
 								{polylineDescription.utilityAttachments.map(

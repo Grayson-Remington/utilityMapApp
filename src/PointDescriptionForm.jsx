@@ -13,6 +13,7 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 		cityPowerPhase: '',
 		cityPowerEquipment: '',
 		cityPowerLaterals: '',
+		domStreetlight: '',
 		utilityAttachments: [],
 	});
 
@@ -29,6 +30,8 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 				cityPowerPhase: graphic.attributes.cityPowerPhase || '',
 				cityPowerEquipment: graphic.attributes.cityPowerEquipment || '',
 				cityPowerLaterals: graphic.attributes.cityPowerLaterals || '',
+				domStreetlight: graphic.attributes.domStreetlight || '',
+				cityStreetlight: graphic.attributes.cityStreetlight || '',
 				utilityAttachments:
 					typeof graphic.attributes.utilityAttachments === 'string'
 						? JSON.parse(graphic.attributes.utilityAttachments)
@@ -38,7 +41,7 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 	}, [graphic]);
 
 	const handleChange = (event) => {
-		const { name, value } = event.target;
+		const { name, value, checked } = event.target;
 		if (name.startsWith('utilityAttachments')) {
 			const [_, index, key] = name.split('.');
 			setPointDescription((prevPointDescription) => {
@@ -54,6 +57,18 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 					utilityAttachments: newUtilityAttachments,
 				};
 			});
+		} else if (name.startsWith('domStreetlight')) {
+			console.log(checked);
+			setPointDescription((prevPointDescription) => ({
+				...prevPointDescription,
+				[name]: checked ? 'Yes' : 'No',
+			}));
+		} else if (name.startsWith('cityStreetlight')) {
+			console.log(checked);
+			setPointDescription((prevPointDescription) => ({
+				...prevPointDescription,
+				[name]: checked ? 'Yes' : 'No',
+			}));
 		} else {
 			setPointDescription((prevPointDescription) => ({
 				...prevPointDescription,
@@ -112,43 +127,29 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 						{/* Pole information */}
 						<h3>Pole Information</h3>
 						<div className='utility-options'>
-							<label>
-								<input
-									type='radio'
-									name='utilityType'
-									value='Power'
-									checked={
-										pointDescription.utilityType === 'Power'
-									}
-									onChange={handleChange}
-								/>
-								Power
-							</label>
-							<label>
-								<input
-									type='radio'
-									name='utilityType'
-									value='Telco'
-									checked={
-										pointDescription.utilityType === 'Telco'
-									}
-									onChange={handleChange}
-								/>
-								Telco
-							</label>
-							<label>
-								<input
-									type='radio'
-									name='utilityType'
-									value='Power + Telco'
-									checked={
-										pointDescription.utilityType ===
-										'Power + Telco'
-									}
-									onChange={handleChange}
-								/>
-								Power + Telco
-							</label>
+							<label htmlFor='utilityType'>Utility Type:</label>
+							<select
+								name='utilityType'
+								value={pointDescription.utilityType}
+								onChange={handleChange}
+							>
+								<option value='Telco'>Telco</option>
+								<option value='City Power'>City Power</option>
+								<option value='Dom Power'>Dom Power</option>
+								<option value='Dom Power + City Power'>
+									Dom Power + City Power
+								</option>
+								<option value='Dom Power + Telco'>
+									Dom Power + Telco
+								</option>
+
+								<option value='City Power + Telco'>
+									City Power + Telco
+								</option>
+								<option value='Dom Power + City Power + Telco'>
+									Dom Power + City Power + Telco
+								</option>
+							</select>
 						</div>
 						<div className='input-row'>
 							<div className='input-field'>
@@ -173,9 +174,13 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 						</div>
 
 						{/* Dominion Power - conditionally rendered */}
-						{(pointDescription.utilityType === 'Power' ||
+						{(pointDescription.utilityType === 'Dom Power' ||
 							pointDescription.utilityType ===
-								'Power + Telco') && (
+								'Dom Power + Telco' ||
+							pointDescription.utilityType ===
+								'Dom Power + City Power' ||
+							pointDescription.utilityType ===
+								'Dom Power + City Power + Telco') && (
 							<>
 								<h3>Dominion Power</h3>
 								<div className='input-row'>
@@ -212,14 +217,31 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 											onChange={handleChange}
 										/>
 									</div>
+
+									<label>
+										Dom Streetlight
+										<input
+											type='checkbox'
+											name='domStreetlight'
+											checked={
+												pointDescription.domStreetlight ===
+												'Yes'
+											}
+											onChange={handleChange}
+										/>
+									</label>
 								</div>
 							</>
 						)}
 
 						{/* City Power - conditionally rendered */}
-						{(pointDescription.utilityType === 'Power' ||
+						{(pointDescription.utilityType === 'City Power' ||
 							pointDescription.utilityType ===
-								'Power + Telco') && (
+								'City Power + Telco' ||
+							pointDescription.utilityType ===
+								'Dom Power + City Power' ||
+							pointDescription.utilityType ===
+								'Dom Power + City Power + Telco') && (
 							<>
 								<h3>City Power</h3>
 								<div className='input-row'>
@@ -256,6 +278,18 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 											onChange={handleChange}
 										/>
 									</div>
+									<label>
+										City Streetlight
+										<input
+											type='checkbox'
+											name='cityStreetlight'
+											checked={
+												pointDescription.cityStreetlight ===
+												'Yes'
+											}
+											onChange={handleChange}
+										/>
+									</label>
 								</div>
 							</>
 						)}
@@ -263,7 +297,11 @@ const PointDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 						{/* Utilities - conditionally rendered */}
 						{(pointDescription.utilityType === 'Telco' ||
 							pointDescription.utilityType ===
-								'Power + Telco') && (
+								'Dom Power + Telco' ||
+							pointDescription.utilityType ===
+								'City Power + Telco' ||
+							pointDescription.utilityType ===
+								'Dom Power + City Power + Telco') && (
 							<>
 								<h3>Utilities</h3>
 								{pointDescription.utilityAttachments.map(

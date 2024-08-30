@@ -210,10 +210,13 @@ const MapComponent = () => {
     <td>${attributes.poleOwner || ''}</td>
   </tr>  
 </table>
+
 <br/>
 ${
-	attributes.utilityType == 'Power' ||
-	attributes.utilityType == 'Power + Telco'
+	attributes.utilityType == 'Dom Power' ||
+	attributes.utilityType == 'Dom Power + Telco' ||
+	attributes.utilityType == 'Dom Power + City Power' ||
+	attributes.utilityType == 'Dom Power + City Power + Telco'
 		? `
 <h3>Dominion Power</h3>
 <table id="customers">
@@ -229,14 +232,17 @@ ${
   </tr>  
 
 </table>
+Streetlight: ${attributes.domStreetlight || ''}
 <br/>
 `
 		: ''
 }
 
 ${
-	attributes.utilityType == 'Power' ||
-	attributes.utilityType == 'Power + Telco'
+	attributes.utilityType == 'City Power' ||
+	attributes.utilityType == 'City Power + Telco' ||
+	attributes.utilityType == 'Dom Power + City Power' ||
+	attributes.utilityType == 'Dom Power + City Power + Telco'
 		? `
 <h3>City Power</h3>
 <table id="customers">
@@ -252,13 +258,16 @@ ${
   </tr>  
 
 </table>
+Streetlight: ${attributes.cityStreetlight || ''}
 <br/>
 `
 		: ''
 }
 ${
 	attributes.utilityType == 'Telco' ||
-	attributes.utilityType == 'Power + Telco'
+	attributes.utilityType == 'Dom Power + Telco' ||
+	attributes.utilityType == 'City Power + Telco' ||
+	attributes.utilityType == 'Dom Power + City Power + Telco'
 		? `
 <h3>Utilities</h3>
 <table id="customers">
@@ -312,82 +321,28 @@ ${
 				// 	 `;
 				div.innerHTML = `
 				<div style="display: flex; flex-direction: column; align-items: center;">
-				<h3>Pole Information</h3>
+				<h3>Ground Feature Information</h3>
+				Feature Type: ${attributes.featureType || ''}
 					   <table id="customers">
   <tr>
-    <th>Pole Number</th>
-    <th>Pole Owner</th>
-  </tr>
-  <tr>
-    <td>${attributes.poleNumber || ''}</td>
-    <td>${attributes.poleOwner || ''}</td>
-  </tr>  
-</table>
-<br/>
-${
-	attributes.domPowerPhase !== '' ||
-	attributes.domPowerEquipment !== '' ||
-	attributes.domPowerLaterals !== ''
-		? `
-<h3>Dominion Power</h3>
-<table id="customers">
-  <tr>
-    <th>Power Phase</th>
-		<th>Equipment</th>
-		<th>Power Laterals</th>
-  </tr>
-  <tr>
-    <td>${attributes.domPowerPhase || ''}</td>
-    <td>${attributes.domPowerEquipment || ''}</td>
-		<td>${attributes.domPowerLaterals || ''}</td>
-  </tr>  
-
-</table>
-<br/>
-`
-		: ''
-}
-
-${
-	attributes.cityPowerPhase !== '' ||
-	attributes.cityPowerEquipment !== '' ||
-	attributes.cityPowerLaterals !== ''
-		? `
-<h3>City Power</h3>
-<table id="customers">
-  <tr>
-    <th>Power Phase</th>
-		<th>Equipment</th>
-		<th>Power Laterals</th>
-  </tr>
-  <tr>
-    <td>${attributes.cityPowerPhase || ''}</td>
-    <td>${attributes.cityPowerEquipment || ''}</td>
-		<td>${attributes.cityPowerLaterals || ''}</td>
-  </tr>  
-
-</table>
-<br/>
-`
-		: ''
-}
-${
-	utilityAttachmentsHTML !== ''
-		? `
-<h3>Utilities</h3>
-<table id="customers">
-  <tr>
-    <th>Utility Owner</th>
-    <th>Equipment</th>
+    
+    <th>Feature Owner</th>
+		<th>Feature Dimensions</th>
 		<th>Laterals</th>
   </tr>
-  
-    ${utilityAttachmentsHTML}
+  <tr>
     
-	
-</table>`
-		: ''
-}</div>
+    <td>${attributes.featureOwner || ''}</td>
+		 <td>${attributes.featureDimensions || ''}</td>
+		 <td>${attributes.laterals || ''}</td>
+  </tr>  
+</table>
+Feature Description: ${attributes.featureDescription || ''}
+<br/>
+
+
+
+</div>
 					  `;
 				return div;
 			}
@@ -426,17 +381,22 @@ ${
 				// 	 `;
 				div.innerHTML = `
 				<div style="display: flex; flex-direction: column; align-items: center;">
-				<h3>Power Information</h3>
+				<h3>Overhead Line Information</h3>
+				Lateral: ${attributes.lateral || ''}
+				<br/>
+				Dominion Power Phase: ${attributes.domPowerPhase || ''}
 					   <table id="customers">
   <tr>
-    <th>Dominion Power Phase</th>
     <th>City Power Phase</th>
+    <th>City Power Equipment</th>
 		<th>City Power Laterals</th>
   </tr>
   <tr>
-    <td>${attributes.domPowerPhase || ''}</td>
+    
     <td>${attributes.cityPowerPhase || ''}</td>
+		<td>${attributes.cityPowerEquipment || ''}</td>
 		<td>${attributes.cityPowerLaterals || ''}</td>
+		
   </tr>  
 </table>
 <br/>
@@ -458,19 +418,17 @@ ${
 			}
 			function undergroundLinePopupContent(feature) {
 				const attributes = feature.graphic.attributes;
-				let utilityAttachmentsHTML;
+				let utilityConduitsHTML;
 				console.log(attributes);
-				if (attributes.utilityAttachments == null) {
-					utilityAttachmentsHTML = '';
+				if (attributes.utilityConduits == null) {
+					utilityConduitsHTML = '';
 				} else {
-					utilityAttachmentsHTML = JSON.parse(
-						attributes.utilityAttachments
-					)
-						.map((attachment) => {
+					utilityConduitsHTML = JSON.parse(attributes.utilityConduits)
+						.map((conduit) => {
 							return `<tr>
-				      <td> ${attachment.utilityOwner || ''}</td>
-				      <td> ${attachment.utilityEquipment || ''}</td>
-							<td> ${attachment.utilityLaterals || ''}</td>
+				      <td> ${conduit.utilityOwner || ''}</td>
+				      <td> ${conduit.utilityConduits || ''}</td>
+							<td> ${conduit.utilityWires || ''}</td>
 				    </tr>`;
 						})
 						.join('');
@@ -483,38 +441,28 @@ ${
 				// 	     <p><strong>Pole Owner:</strong> ${attributes.poleOwner || ''}</p></div>
 				// 			 <div>
 				// 	     <p><strong>Power Phase:</strong> ${attributes.powerPhase || ''}</p></div>
-				// 	    <p><strong>Power Attachment:</strong> ${
-				// 			attributes.powerAttachment || ''
+				// 	    <p><strong>Power Conduit:</strong> ${
+				// 			attributes.powerConduit || ''
 				// 		}</p>
-				// 	     <div><strong>Utility Attachments:</strong><ol>${utilityAttachmentsHTML}</ol></div>
+				// 	     <div><strong>Utility Conduits:</strong><ol>${utilityConduitsHTML}</ol></div>
 
 				// 	 `;
 				div.innerHTML = `
 				<div style="display: flex; flex-direction: column; align-items: center;">
-				<h3>Power Information</h3>
-					   <table id="customers">
-  <tr>
-    <th>Dominion Power Phase</th>
-    <th>City Power Phase</th>
-		<th>City Power Laterals</th>
-  </tr>
-  <tr>
-    <td>${attributes.domPowerPhase || ''}</td>
-    <td>${attributes.cityPowerPhase || ''}</td>
-		<td>${attributes.cityPowerLaterals || ''}</td>
-  </tr>  
-</table>
+				<h3>Underground Line Information</h3>
+					   <div>Concrete Encased: ${attributes.concreteEncased}</div>
+						 <div>Lateral: ${attributes.lateral}</div>
 <br/>
 
 <h3>Utilities</h3>
 <table id="customers">
   <tr>
     <th>Utility Owner</th>
-    <th>Equipment</th>
-		<th>Laterals</th>
+    <th>Conduits</th>
+		<th>Wires</th>
   </tr>
   
-    ${utilityAttachmentsHTML}
+    ${utilityConduitsHTML}
     
 	
 </table></div>
@@ -535,7 +483,17 @@ ${
 						}, // replace with the symbol corresponding to value1
 					},
 					{
-						label: 'Power',
+						label: 'Dom Power',
+						value: 'Dom Power', // replace with the second unique value
+						symbol: {
+							type: 'simple-marker', // autocasts as new SimpleMarkerSymbol()
+							style: 'circle',
+							color: 'red', // color for the first unique value
+							size: '16px', // size of the circle
+						}, // replace with the symbol corresponding to value2
+					},
+					{
+						label: 'Dom Power',
 						value: 'Power', // replace with the second unique value
 						symbol: {
 							type: 'simple-marker', // autocasts as new SimpleMarkerSymbol()
@@ -591,7 +549,7 @@ ${
 				defaultLabel: 'Unknown',
 			});
 
-			const polylineRenderer = new UniqueValueRenderer({
+			const undergroundLineRenderer = new UniqueValueRenderer({
 				field: 'utilityType', // Attribute field name
 				uniqueValueInfos: [
 					{
@@ -649,8 +607,8 @@ ${
 						}, // Optional: symbol for unmatched values
 					},
 					{
-						label: 'Power',
-						value: 'Power', // Second unique value
+						label: 'Dom Power',
+						value: 'Dom Power', // Second unique value
 						symbol: {
 							type: 'cim',
 							// CIM Line Symbol
@@ -705,7 +663,7 @@ ${
 
 					// Add more unique values and symbols as needed
 				],
-				defaultLabel: 'Power + Telco',
+				defaultLabel: 'Dom Power + City Power + Telco',
 				defaultSymbol: {
 					type: 'cim',
 					// CIM Line Symbol
@@ -773,7 +731,7 @@ ${
 					},
 				}, // Optional: symbol for unmatched values
 			});
-			const undergroundLineRenderer = new UniqueValueRenderer({
+			const polylineRenderer = new UniqueValueRenderer({
 				field: 'utilityType', // Attribute field name
 				uniqueValueInfos: [
 					{
@@ -840,8 +798,8 @@ ${
 						}, // Optional: symbol for unmatched values
 					},
 					{
-						label: 'Power',
-						value: 'Power', // Second unique value
+						label: 'Dom Power',
+						value: 'Dom Power', // Second unique value
 						symbol: {
 							type: 'cim',
 							// CIM Line Symbol
@@ -906,7 +864,7 @@ ${
 
 					// Add more unique values and symbols as needed
 				],
-				defaultLabel: 'Power + Telco',
+				defaultLabel: 'Dom Power + City Power + Telco',
 				defaultSymbol: {
 					type: 'cim',
 					// CIM Line Symbol
@@ -999,7 +957,7 @@ ${
 						alias: 'Utility Type',
 						type: 'string',
 						editable: true,
-						defaultValue: 'Power',
+						defaultValue: 'Dom Power',
 					},
 					{
 						name: 'poleOwner',
@@ -1060,6 +1018,20 @@ ${
 						alias: 'Power Attachment',
 						type: 'string',
 						editable: true,
+					},
+					{
+						name: 'domStreetlight',
+						alias: 'Dom Streetlight',
+						type: 'string',
+						editable: true,
+						defaultValue: 'No',
+					},
+					{
+						name: 'cityStreetlight',
+						alias: 'City Streetlight',
+						type: 'string',
+						editable: true,
+						defaultValue: 'No',
 					},
 					{
 						name: 'utilityAttachments',
@@ -1099,75 +1071,33 @@ ${
 						defaultValue: 'Telco',
 					},
 					{
-						name: 'groundFeatureType',
+						name: 'featureType',
 						alias: 'Ground Feature Type',
 						type: 'string',
 						editable: true,
 						defaultValue: 'Handhole',
 					},
 					{
-						name: 'poleOwner',
-						alias: 'Pole Owner',
-						type: 'string',
-						editable: true,
-					},
-					// {
-					// 	name: 'poleType',
-					// 	alias: 'poleType',
-					// 	type: 'binary',
-					// 	editable: true,
-					// },
-					{
-						name: 'poleNumber',
-						alias: 'Pole Number',
+						name: 'featureOwner',
+						alias: 'Ground Feature Owner',
 						type: 'string',
 						editable: true,
 					},
 					{
-						name: 'poleOwner',
-						alias: 'Pole Owner',
+						name: 'featureDimensions',
+						alias: 'Ground Feature Dimensions',
 						type: 'string',
 						editable: true,
 					},
 					{
-						name: 'domPowerPhase',
-						alias: 'Power Phase',
+						name: 'laterals',
+						alias: 'Laterals',
 						type: 'string',
 						editable: true,
 					},
 					{
-						name: 'domPowerEquipment',
-						alias: 'Power Attachment',
-						type: 'string',
-						editable: true,
-					},
-					{
-						name: 'domPowerLaterals',
-						alias: 'Power Attachment',
-						type: 'string',
-						editable: true,
-					},
-					{
-						name: 'cityPowerPhase',
-						alias: 'Power Phase',
-						type: 'string',
-						editable: true,
-					},
-					{
-						name: 'cityPowerEquipment',
-						alias: 'Power Attachment',
-						type: 'string',
-						editable: true,
-					},
-					{
-						name: 'cityPowerLaterals',
-						alias: 'Power Attachment',
-						type: 'string',
-						editable: true,
-					},
-					{
-						name: 'utilityAttachments',
-						alias: 'Utility Attachments 2',
+						name: 'featureDescription',
+						alias: 'Ground Feature Description',
 						type: 'string',
 						editable: true,
 					},
@@ -1204,7 +1134,14 @@ ${
 						alias: 'Utility Type',
 						type: 'string',
 						editable: true,
-						defaultValue: 'Power',
+						defaultValue: 'Dom Power',
+					},
+					{
+						name: 'lateral',
+						alias: 'lateral',
+						type: 'string',
+						editable: true,
+						defaultValue: 'No',
 					},
 					{
 						name: 'domPowerPhase',
@@ -1263,26 +1200,23 @@ ${
 						defaultValue: 'Telco',
 					},
 					{
-						name: 'domPowerPhase',
-						alias: 'Dominion Power Phase',
+						name: 'lateral',
+						alias: 'lateral',
 						type: 'string',
 						editable: true,
+						defaultValue: 'No',
 					},
 					{
-						name: 'cityPowerPhase',
-						alias: 'City Power Phase',
+						name: 'concreteEncased',
+						alias: 'Concrete Encased',
 						type: 'string',
 						editable: true,
+						defaultValue: 'No',
 					},
+
 					{
-						name: 'cityPowerLaterals',
-						alias: 'City Power Phase',
-						type: 'string',
-						editable: true,
-					},
-					{
-						name: 'utilityAttachments',
-						alias: 'Utility Attachments',
+						name: 'utilityConduits',
+						alias: 'Utility Conduits',
 						type: 'string',
 						editable: true,
 					},
@@ -1548,32 +1482,50 @@ ${
 							// autocastable to FormTemplate
 							elements: [
 								new FieldElement({
-									fieldName: 'utilityType', // Field that will accept multiple values
+									fieldName: 'utilityType', // Field that will accept a single value
 									label: 'Utility Type',
 									domain: {
 										type: 'coded-value', // Use the domain defined in the layer
 										codedValues: [
 											{
-												name: 'Power',
-												code: 'Power',
-											},
-											{
 												name: 'Telco',
 												code: 'Telco',
 											},
 											{
-												name: 'Power + Telco',
-												code: 'Power + Telco',
+												name: 'City Power',
+												code: 'City Power',
+											},
+											{
+												name: 'Dom Power',
+												code: 'Dom Power',
+											},
+
+											{
+												name: 'Dom Power + City Power',
+												code: 'Dom Power + City Power',
+											},
+
+											{
+												name: 'Dom Power + Telco',
+												code: 'Dom Power + Telco',
+											},
+											{
+												name: 'City Power + Telco',
+												code: 'City Power + Telco',
+											},
+											{
+												name: 'Dom Power + City Power + Telco',
+												code: 'Dom Power + City Power + Telco',
 											},
 										],
 									},
 									input: {
-										// autocastable to RadioButtonsInput
-										type: 'radio-buttons',
-										noValueOptionLabel: 'Not applicable',
+										// Change input type to 'dropdown' to create a drop-down list
+										type: 'dropdown',
 										showNoValueOption: false,
 									},
 								}),
+								,
 							],
 						},
 					},
@@ -1585,32 +1537,50 @@ ${
 							// autocastable to FormTemplate
 							elements: [
 								new FieldElement({
-									fieldName: 'utilityType', // Field that will accept multiple values
+									fieldName: 'utilityType', // Field that will accept a single value
 									label: 'Utility Type',
 									domain: {
 										type: 'coded-value', // Use the domain defined in the layer
 										codedValues: [
 											{
-												name: 'Power',
-												code: 'Power',
-											},
-											{
 												name: 'Telco',
 												code: 'Telco',
 											},
 											{
-												name: 'Power + Telco',
-												code: 'Power + Telco',
+												name: 'City Power',
+												code: 'City Power',
+											},
+											{
+												name: 'Dom Power',
+												code: 'Dom Power',
+											},
+
+											{
+												name: 'Dom Power + City Power',
+												code: 'Dom Power + City Power',
+											},
+
+											{
+												name: 'Dom Power + Telco',
+												code: 'Dom Power + Telco',
+											},
+											{
+												name: 'City Power + Telco',
+												code: 'City Power + Telco',
+											},
+											{
+												name: 'Dom Power + City Power + Telco',
+												code: 'Dom Power + City Power + Telco',
 											},
 										],
 									},
 									input: {
-										// autocastable to RadioButtonsInput
-										type: 'radio-buttons',
-										noValueOptionLabel: 'Not applicable',
+										// Change input type to 'dropdown' to create a drop-down list
+										type: 'dropdown',
 										showNoValueOption: false,
 									},
 								}),
+								,
 							],
 						},
 					},
@@ -1621,32 +1591,50 @@ ${
 							// autocastable to FormTemplate
 							elements: [
 								new FieldElement({
-									fieldName: 'utilityType', // Field that will accept multiple values
+									fieldName: 'utilityType', // Field that will accept a single value
 									label: 'Utility Type',
 									domain: {
 										type: 'coded-value', // Use the domain defined in the layer
 										codedValues: [
 											{
-												name: 'Power',
-												code: 'Power',
-											},
-											{
 												name: 'Telco',
 												code: 'Telco',
 											},
 											{
-												name: 'Power + Telco',
-												code: 'Power + Telco',
+												name: 'City Power',
+												code: 'City Power',
+											},
+											{
+												name: 'Dom Power',
+												code: 'Dom Power',
+											},
+
+											{
+												name: 'Dom Power + City Power',
+												code: 'Dom Power + City Power',
+											},
+
+											{
+												name: 'Dom Power + Telco',
+												code: 'Dom Power + Telco',
+											},
+											{
+												name: 'City Power + Telco',
+												code: 'City Power + Telco',
+											},
+											{
+												name: 'Dom Power + City Power + Telco',
+												code: 'Dom Power + City Power + Telco',
 											},
 										],
 									},
 									input: {
-										// autocastable to RadioButtonsInput
-										type: 'radio-buttons',
-										noValueOptionLabel: 'Not applicable',
+										// Change input type to 'dropdown' to create a drop-down list
+										type: 'dropdown',
 										showNoValueOption: false,
 									},
 								}),
+								,
 							],
 						},
 					},
@@ -1657,32 +1645,50 @@ ${
 							// autocastable to FormTemplate
 							elements: [
 								new FieldElement({
-									fieldName: 'utilityType', // Field that will accept multiple values
+									fieldName: 'utilityType', // Field that will accept a single value
 									label: 'Utility Type',
 									domain: {
 										type: 'coded-value', // Use the domain defined in the layer
 										codedValues: [
 											{
-												name: 'Power',
-												code: 'Power',
-											},
-											{
 												name: 'Telco',
 												code: 'Telco',
 											},
 											{
-												name: 'Power + Telco',
-												code: 'Power + Telco',
+												name: 'City Power',
+												code: 'City Power',
+											},
+											{
+												name: 'Dom Power',
+												code: 'Dom Power',
+											},
+
+											{
+												name: 'Dom Power + City Power',
+												code: 'Dom Power + City Power',
+											},
+
+											{
+												name: 'Dom Power + Telco',
+												code: 'Dom Power + Telco',
+											},
+											{
+												name: 'City Power + Telco',
+												code: 'City Power + Telco',
+											},
+											{
+												name: 'Dom Power + City Power + Telco',
+												code: 'Dom Power + City Power + Telco',
 											},
 										],
 									},
 									input: {
-										// autocastable to RadioButtonsInput
-										type: 'radio-buttons',
-										noValueOptionLabel: 'Not applicable',
+										// Change input type to 'dropdown' to create a drop-down list
+										type: 'dropdown',
 										showNoValueOption: false,
 									},
 								}),
+								,
 							],
 						},
 					},

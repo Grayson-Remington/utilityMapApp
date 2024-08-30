@@ -5,14 +5,13 @@ const UndergroundLineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 	const [undergroundLineDescription, setUndergroundLineDescription] =
 		useState({
 			utilityType: '',
-			domPowerPhase: '',
-			cityPowerPhase: '',
-			cityPowerLaterals: '',
-			utilityAttachments: [
+			concreteEncased: '',
+			lateral: '',
+			utilityConduits: [
 				{
 					utilityOwner: '',
-					utilityEquipment: '',
-					utilityLaterals: '',
+					utilityConduits: '',
+					utilityWires: '',
 				},
 			],
 		});
@@ -22,34 +21,46 @@ const UndergroundLineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 			console.log('Graphic received:', graphic); // Log graphic to verify
 			setUndergroundLineDescription({
 				utilityType: graphic.attributes.utilityType || '',
-				domPowerPhase: graphic.attributes.domPowerPhase || '',
-				cityPowerPhase: graphic.attributes.cityPowerPhase || '',
-				cityPowerLaterals: graphic.attributes.cityPowerLaterals || '',
-				utilityAttachments:
-					typeof graphic.attributes.utilityAttachments === 'string'
-						? JSON.parse(graphic.attributes.utilityAttachments)
+				concreteEncased: graphic.attributes.concreteEncased || '',
+				lateral: graphic.attributes.lateral || '',
+				utilityConduits:
+					typeof graphic.attributes.utilityConduits === 'string'
+						? JSON.parse(graphic.attributes.utilityConduits)
 						: [],
 			});
 		}
 	}, [graphic]);
 
 	const handleChange = (event) => {
-		const { name, value } = event.target;
-		if (name.startsWith('utilityAttachments')) {
+		const { name, value, checked } = event.target;
+		if (name.startsWith('utilityConduits')) {
 			const [_, index, key] = name.split('.');
 			setUndergroundLineDescription((prevUndergroundLineDescription) => {
-				const newUtilityAttachments = [
-					...prevUndergroundLineDescription.utilityAttachments,
+				const newUtilityConduits = [
+					...prevUndergroundLineDescription.utilityConduits,
 				];
-				newUtilityAttachments[index] = {
-					...newUtilityAttachments[index],
+				newUtilityConduits[index] = {
+					...newUtilityConduits[index],
 					[key]: value,
 				};
 				return {
 					...prevUndergroundLineDescription,
-					utilityAttachments: newUtilityAttachments,
+
+					utilityConduits: newUtilityConduits,
 				};
 			});
+		} else if (name.startsWith('lateral')) {
+			console.log(checked);
+			setUndergroundLineDescription((prevUndergroundLineDescription) => ({
+				...prevUndergroundLineDescription,
+				[name]: checked ? 'Yes' : 'No',
+			}));
+		} else if (name.startsWith('concreteEncased')) {
+			console.log(checked);
+			setUndergroundLineDescription((prevUndergroundLineDescription) => ({
+				...prevUndergroundLineDescription,
+				[name]: checked ? 'Yes' : 'No',
+			}));
 		} else {
 			setUndergroundLineDescription((prevUndergroundLineDescription) => ({
 				...prevUndergroundLineDescription,
@@ -57,28 +68,28 @@ const UndergroundLineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 			}));
 		}
 	};
-	const handleAddAttachment = () => {
+	const handleAddConduit = () => {
 		setUndergroundLineDescription((prevUndergroundLineDescription) => ({
 			...prevUndergroundLineDescription,
-			utilityAttachments: [
-				...prevUndergroundLineDescription.utilityAttachments,
-				{ utilityOwner: '', spliceCase: '' },
+			utilityConduits: [
+				...prevUndergroundLineDescription.utilityConduits,
+				{ utilityOwner: '', utilityConduits: '', utilityWires: '' },
 			],
 		}));
 	};
 
-	const handleDeleteAttachment = (index) => {
+	const handleDeleteConduit = (index) => {
 		setUndergroundLineDescription((prevUndergroundLineDescription) => {
-			// Create a copy of the current utilityAttachments array
-			const newAttachments = [
-				...prevUndergroundLineDescription.utilityAttachments,
+			// Create a copy of the current utilityConduits array
+			const newConduits = [
+				...prevUndergroundLineDescription.utilityConduits,
 			];
-			// Remove the attachment at the specified index
-			newAttachments.splice(index, 1);
-			// Return the new state with the updated utilityAttachments array
+			// Remove the conduit at the specified index
+			newConduits.splice(index, 1);
+			// Return the new state with the updated utilityConduits array
 			return {
 				...prevUndergroundLineDescription,
-				utilityAttachments: newAttachments,
+				utilityConduits: newConduits,
 			};
 		});
 	};
@@ -88,9 +99,9 @@ const UndergroundLineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 		// Create a new undergroundLineDescription object
 		const updatedUndergroundLineDescription = {
 			...undergroundLineDescription, // Spread existing properties
-			utilityAttachments: JSON.stringify(
-				undergroundLineDescription.utilityAttachments
-			), // Update utilityAttachments
+			utilityConduits: JSON.stringify(
+				undergroundLineDescription.utilityConduits
+			), // Update utilityConduits
 		};
 
 		// Call onSubmit with the updated object
@@ -110,189 +121,115 @@ const UndergroundLineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 						{/* Pole information */}
 						<h3>Pole Information</h3>
 						<div className='utility-options'>
-							<label>
-								<input
-									type='radio'
-									name='utilityType'
-									value='Power'
-									checked={
-										undergroundLineDescription.utilityType ===
-										'Power'
-									}
-									onChange={handleChange}
-								/>
-								Power
-							</label>
-							<label>
-								<input
-									type='radio'
-									name='utilityType'
-									value='Telco'
-									checked={
-										undergroundLineDescription.utilityType ===
-										'Telco'
-									}
-									onChange={handleChange}
-								/>
-								Telco
-							</label>
-							<label>
-								<input
-									type='radio'
-									name='utilityType'
-									value='Power + Telco'
-									checked={
-										undergroundLineDescription.utilityType ===
-										'Power + Telco'
-									}
-									onChange={handleChange}
-								/>
-								Power + Telco
-							</label>
+							<label htmlFor='utilityType'>Utility Type:</label>
+							<select
+								name='utilityType'
+								value={undergroundLineDescription.utilityType}
+								onChange={handleChange}
+							>
+								<option value='Telco'>Telco</option>
+								<option value='City Power'>City Power</option>
+								<option value='Dom Power'>Dom Power</option>
+								<option value='Dom Power + City Power'>
+									Dom Power + City Power
+								</option>
+								<option value='Dom Power + Telco'>
+									Dom Power + Telco
+								</option>
+
+								<option value='City Power + Telco'>
+									City Power + Telco
+								</option>
+								<option value='Dom Power + City Power + Telco'>
+									Dom Power + City Power + Telco
+								</option>
+							</select>
 						</div>
-
-						{/* Dominion Power - conditionally rendered */}
-						{(undergroundLineDescription.utilityType === 'Power' ||
-							undergroundLineDescription.utilityType ===
-								'Power + Telco') && (
-							<>
-								<h3>Dominion Power</h3>
-								<div className='input-row'>
-									<div className='input-field'>
-										<label>Power Phase</label>
-										<input
-											type='text'
-											name='domPowerPhase'
-											value={
-												undergroundLineDescription.domPowerPhase
-											}
-											onChange={handleChange}
-										/>
-									</div>
-								</div>
-							</>
-						)}
-
-						{/* City Power - conditionally rendered */}
-						{(undergroundLineDescription.utilityType === 'Power' ||
-							undergroundLineDescription.utilityType ===
-								'Power + Telco') && (
-							<>
-								<h3>City Power</h3>
-								<div className='input-row'>
-									<div className='input-field'>
-										<label>Power Phase</label>
-										<input
-											type='text'
-											name='cityPowerPhase'
-											value={
-												undergroundLineDescription.cityPowerPhase
-											}
-											onChange={handleChange}
-										/>
-									</div>
-									<div className='input-field'>
-										<label>Equipment</label>
-										<input
-											type='text'
-											name='cityPowerEquipment'
-											value={
-												undergroundLineDescription.cityPowerEquipment
-											}
-											onChange={handleChange}
-										/>
-									</div>
-									<div className='input-field'>
-										<label>Power Laterals</label>
-										<input
-											type='text'
-											name='cityPowerLaterals'
-											value={
-												undergroundLineDescription.cityPowerLaterals
-											}
-											onChange={handleChange}
-										/>
-									</div>
-								</div>
-							</>
-						)}
-
+						<label>
+							<input
+								type='checkbox'
+								name='concreteEncased'
+								checked={
+									undergroundLineDescription.concreteEncased ===
+									'Yes'
+								}
+								onChange={handleChange}
+							/>
+							Concrete Encased
+						</label>
+						<label>
+							<input
+								type='checkbox'
+								name='lateral'
+								checked={
+									undergroundLineDescription.lateral === 'Yes'
+								}
+								onChange={handleChange}
+							/>
+							Lateral
+						</label>
 						{/* Utilities - conditionally rendered */}
-						{(undergroundLineDescription.utilityType === 'Telco' ||
-							undergroundLineDescription.utilityType ===
-								'Power + Telco') && (
-							<>
-								<h3>Utilities</h3>
-								{undergroundLineDescription.utilityAttachments.map(
-									(attachment, index) => (
-										<>
-											<div
-												className='input-row'
-												key={index}
-											>
-												<div
-													style={{
-														textDecoration:
-															'underline',
-													}}
-												>
-													{index + 1}
-												</div>
-												<div className='input-field'>
-													<label>Utility Owner</label>
-													<input
-														type='text'
-														name={`utilityAttachments.${index}.utilityOwner`}
-														value={
-															attachment.utilityOwner
-														}
-														onChange={handleChange}
-													/>
-												</div>
-												<div className='input-field'>
-													<label>Equipment</label>
-													<input
-														type='text'
-														name={`utilityAttachments.${index}.utilityEquipment`}
-														value={
-															attachment.utilityEquipment
-														}
-														onChange={handleChange}
-													/>
-												</div>
-												<div className='input-field'>
-													<label>Laterals</label>
-													<input
-														type='text'
-														name={`utilityAttachments.${index}.utilityLaterals`}
-														value={
-															attachment.utilityLaterals
-														}
-														onChange={handleChange}
-													/>
-												</div>
-												<button
-													className='esri-icon-trash'
-													style={{ height: '30px' }}
-													onClick={() =>
-														handleDeleteAttachment(
-															index
-														)
-													}
-												></button>
-											</div>
-										</>
-									)
-								)}
-								<button
-									style={{ width: '100%' }}
-									type='button'
-									onClick={handleAddAttachment}
-								>
-									Add Utility Attachment
-								</button>
-							</>
+
+						<h3>Utilities</h3>
+						{undergroundLineDescription.utilityConduits.map(
+							(conduit, index) => (
+								<>
+									<div
+										className='input-row'
+										key={index}
+									>
+										<div
+											style={{
+												textDecoration: 'underline',
+											}}
+										>
+											{index + 1}
+										</div>
+										<div className='input-field'>
+											<label>Utility Owner</label>
+											<input
+												type='text'
+												name={`utilityConduits.${index}.utilityOwner`}
+												value={conduit.utilityOwner}
+												onChange={handleChange}
+											/>
+										</div>
+										<div className='input-field'>
+											<label>Conduits</label>
+											<input
+												type='text'
+												name={`utilityConduits.${index}.utilityConduits`}
+												value={conduit.utilityConduits}
+												onChange={handleChange}
+											/>
+										</div>
+										<div className='input-field'>
+											<label>Wires</label>
+											<input
+												type='text'
+												name={`utilityConduits.${index}.utilityWires`}
+												value={conduit.utilityWires}
+												onChange={handleChange}
+											/>
+										</div>
+										<button
+											className='esri-icon-trash'
+											style={{ height: '30px' }}
+											onClick={() =>
+												handleDeleteConduit(index)
+											}
+										></button>
+									</div>
+								</>
+							)
 						)}
+						<button
+							style={{ width: '100%' }}
+							type='button'
+							onClick={handleAddConduit}
+						>
+							Add Utility Conduit
+						</button>
 
 						{/* Form buttons */}
 						<div className='modal-buttons'>
