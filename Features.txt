@@ -10,3 +10,19 @@ Features
 - Legend that tells what each color is
 - Export to a Shapefile
 - 
+
+
+Green: 
+
+color: [
+  0, 255, 0,
+  255
+],
+
+
+Purple: 
+
+color: [
+  128, 0, 128,
+  255
+],

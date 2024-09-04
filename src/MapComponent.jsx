@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, act } from 'react';
 import axios from 'axios';
 import MapView from '@arcgis/core/views/MapView';
 import Expand from '@arcgis/core/widgets/Expand.js';
@@ -34,9 +34,17 @@ const MapComponent = () => {
 	const viewRef = useRef(null);
 	const editorRef = useRef(null);
 	const pointLayerRef = useRef(null);
+	const groundFeatureLayerRef = useRef(null);
 	const polylineLayerRef = useRef(null);
-	const undergroundLineLayerRef = useRef(null);
+	const undergroundLinesLayerRef = useRef(null);
 	const [editorState, setEditorState] = useState('');
+	const [filterPhrase, setFilterPhraseState] = useState([
+		'None',
+		'Dom Power',
+		'City Power',
+		'Telco',
+	]);
+
 	const [showPointForm, setShowPointForm] = useState(false);
 	const [showGroundFeatureForm, setShowGroundFeatureForm] = useState(false);
 
@@ -384,7 +392,22 @@ Feature Description: ${attributes.featureDescription || ''}
 				<h3>Overhead Line Information</h3>
 				Lateral: ${attributes.lateral || ''}
 				<br/>
+				${
+					attributes.utilityType == 'Dom Power' ||
+					attributes.utilityType == 'Dom Power + Telco' ||
+					attributes.utilityType == 'Dom Power + City Power' ||
+					attributes.utilityType == 'Dom Power + City Power + Telco'
+						? `
 				Dominion Power Phase: ${attributes.domPowerPhase || ''}
+				`
+						: ''
+				}
+				${
+					attributes.utilityType == 'City Power' ||
+					attributes.utilityType == 'City Power + Telco' ||
+					attributes.utilityType == 'Dom Power + City Power' ||
+					attributes.utilityType == 'Dom Power + City Power + Telco'
+						? `
 					   <table id="customers">
   <tr>
     <th>City Power Phase</th>
@@ -400,7 +423,9 @@ Feature Description: ${attributes.featureDescription || ''}
   </tr>  
 </table>
 <br/>
-
+`
+						: ''
+				}
 <h3>Utilities</h3>
 <table id="customers">
   <tr>
@@ -470,45 +495,2456 @@ Feature Description: ${attributes.featureDescription || ''}
 				return div;
 			}
 			const pointRenderer = new UniqueValueRenderer({
-				field: 'utilityType', // replace with the attribute field name
+				valueExpression: `When(
+					$feature.utilityType == 'Telco' && ($feature.domStreetlight == 'No' && $feature.cityStreetlight == 'No'), 'Telco', 
+					$feature.utilityType == 'Dom Power' && ($feature.domStreetlight == 'No' && $feature.cityStreetlight == 'No'), 'Dom Power', 
+					$feature.utilityType == 'City Power' && ($feature.cityStreetlight == 'No'), 'City Power', 
+					$feature.utilityType == 'Dom Power + City Power' && ($feature.domStreetlight == 'No' && $feature.cityStreetlight == 'No'), 'Dom Power + City Power', 
+					$feature.utilityType == 'Dom Power + Telco' && ($feature.domStreetlight == 'No'), 'Dom Power + Telco', 
+					$feature.utilityType == 'City Power + Telco' && ($feature.domStreetlight == 'No' && $feature.cityStreetlight == 'No'), 'City Power + Telco', 
+					$feature.utilityType == 'Dom Power + City Power + Telco' && ($feature.domStreetlight == 'No' && $feature.cityStreetlight == 'No'), 'Dom Power + City Power + Telco', 
+					$feature.utilityType == 'Telco' && ($feature.domStreetlight == 'Yes' || $feature.cityStreetlight == 'Yes'), 'Telco + Streetlight', 
+					$feature.utilityType == 'Dom Power' && ($feature.domStreetlight == 'Yes'), 'Dom Power + Streetlight', 
+					$feature.utilityType == 'City Power' && ($feature.domStreetlight == 'Yes' || $feature.cityStreetlight == 'Yes'), 'City Power + Streetlight', $feature.utilityType == 'Dom Power + City Power' && ($feature.domStreetlight == 'Yes' || $feature.cityStreetlight == 'Yes'), 'Dom Power + City Power + Streetlight', 
+					$feature.utilityType == 'Dom Power + Telco' && ($feature.domStreetlight == 'Yes'), 'Dom Power + Telco + Streetlight', 
+					$feature.utilityType == 'City Power + Telco' && ($feature.cityStreetlight == 'Yes'), 'City Power + Telco + Streetlight', 
+					$feature.utilityType == 'Dom Power + City Power + Telco' && ($feature.domStreetlight == 'Yes' || $feature.cityStreetlight == 'Yes'), 'Dom Power + City Power + Telco + Streetlight', 'Unknown')`,
 				uniqueValueInfos: [
 					{
 						label: 'Telco',
 						value: 'Telco', // replace with the first unique value
 						symbol: {
-							type: 'simple-marker', // autocasts as new SimpleMarkerSymbol()
-							style: 'circle',
-							color: 'orange', // color for the first unique value
-							size: '16px', // size of the circle
-						}, // replace with the symbol corresponding to value1
+							type: 'cim',
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMPointSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											size: 26, // size of the circle
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8, 0],
+																[5.656, -5.656],
+																[0, -8],
+																[
+																	-5.656,
+																	-5.656,
+																],
+																[-8, 0],
+																[-5.656, 5.656],
+																[0, 8],
+																[5.656, 5.656],
+																[8, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 165, 0,
+																	255,
+																], // orange color
+															},
+														],
+													},
+												},
+											],
+										},
+									],
+								},
+							},
+						},
 					},
+					{
+						label: 'City Power',
+						value: 'City Power', // replace with the second unique value
+						symbol: {
+							type: 'cim',
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMPointSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											size: 26, // size of the circle
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8, 0],
+																[5.656, -5.656],
+																[0, -8],
+																[
+																	-5.656,
+																	-5.656,
+																],
+																[-8, 0],
+																[-5.656, 5.656],
+																[0, 8],
+																[5.656, 5.656],
+																[8, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	128, 0, 128,
+																	255,
+																], // purple color
+															},
+														],
+													},
+												},
+											],
+										},
+									],
+								},
+							},
+						},
+					},
+
 					{
 						label: 'Dom Power',
 						value: 'Dom Power', // replace with the second unique value
 						symbol: {
-							type: 'simple-marker', // autocasts as new SimpleMarkerSymbol()
-							style: 'circle',
-							color: 'red', // color for the first unique value
-							size: '16px', // size of the circle
-						}, // replace with the symbol corresponding to value2
+							type: 'cim',
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMPointSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											size: 26, // size of the circle
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8, 0],
+																[5.656, -5.656],
+																[0, -8],
+																[
+																	-5.656,
+																	-5.656,
+																],
+																[-8, 0],
+																[-5.656, 5.656],
+																[0, 8],
+																[5.656, 5.656],
+																[8, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 0, 0,
+																	255,
+																], // red color
+															},
+														],
+													},
+												},
+											],
+										},
+									],
+								},
+							},
+						},
 					},
 					{
-						label: 'Dom Power',
-						value: 'Power', // replace with the second unique value
+						label: 'Dom Power + City Power',
+						value: 'Dom Power + City Power', // replace with the second unique value
 						symbol: {
-							type: 'simple-marker', // autocasts as new SimpleMarkerSymbol()
-							style: 'circle',
-							color: 'red', // color for the first unique value
-							size: '16px', // size of the circle
-						}, // replace with the symbol corresponding to value2
+							type: 'cim',
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMPointSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 12,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 3,
+																color: [
+																	128, 0, 128,
+																	255,
+																], // purple color
+
+																colorLocked: true,
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 0, 0,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+									],
+								},
+							},
+						},
+					},
+					{
+						label: 'City Power + Telco',
+						value: 'City Power + Telco', // replace with the second unique value
+						symbol: {
+							type: 'cim',
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMPointSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 12,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 3,
+																color: [
+																	237, 116, 2,
+																	255,
+																],
+																colorLocked: true,
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 0, 0,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+									],
+								},
+							},
+						},
+					},
+					{
+						label: 'Dom Power + Telco',
+						value: 'Dom Power + Telco', // replace with the second unique value
+						symbol: {
+							type: 'cim',
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMPointSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 12,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 3,
+																color: [
+																	237, 116, 2,
+																	255,
+																],
+																colorLocked: true,
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 0, 0,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+									],
+								},
+							},
+						},
+					},
+					{
+						label: 'Dom Power + City Power + Telco',
+						value: 'Dom Power + City Power + Telco', // replace with the second unique value
+						symbol: {
+							type: 'cim',
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMPointSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0.0,
+												y: 0.0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 5, // Smaller size for the orange circle
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	255, 165, 0,
+																	255,
+																], // Orange color for the stroke
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 165, 0,
+																	255,
+																], // Orange color for the fill
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 10,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	255, 0, 0,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 0, 0,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 14,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	128, 0, 128,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	128, 0, 128,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+									],
+								},
+							},
+						},
+					},
+					{
+						label: 'Telco + Streetlight',
+						value: 'Telco + Streetlight', // replace with the first unique value
+						symbol: {
+							type: 'cim',
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMPointSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											size: 26, // size of the circle
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8, 0],
+																[5.656, -5.656],
+																[0, -8],
+																[
+																	-5.656,
+																	-5.656,
+																],
+																[-8, 0],
+																[-5.656, 5.656],
+																[0, 8],
+																[5.656, 5.656],
+																[8, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 165, 0,
+																	255,
+																], // orange color
+															},
+														],
+													},
+												},
+											],
+										},
+									],
+								},
+							},
+						},
+					},
+					{
+						label: 'City Power + Streetlight',
+						value: 'City Power + Streetlight', // replace with the second unique value
+						symbol: {
+							type: 'cim',
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMPointSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 10,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[0, 0.65],
+																[8.5, 16.35],
+																[17, 0.65],
+																[0, 0.65],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	0, 0, 0,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 234, 5,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+											rotation: 180,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											offsetY: 6,
+										},
+
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 14,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	0, 0, 0,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	115, 0, 168,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+									],
+								},
+							},
+						},
 					},
 
+					{
+						label: 'Dom Power + Streetlight',
+						value: 'Dom Power + Streetlight', // replace with the second unique value
+						symbol: {
+							type: 'cim',
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMPointSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 10,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[0, 0.65],
+																[8.5, 16.35],
+																[17, 0.65],
+																[0, 0.65],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	0, 0, 0,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 234, 5,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+											rotation: 180,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											offsetY: 6,
+										},
+
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 14,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	0, 0, 0,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 0, 0,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+									],
+								},
+							},
+						},
+					},
+					{
+						label: 'Dom Power + City Power + Streetlight',
+						value: 'Dom Power + City Power + Streetlight', // replace with the second unique value
+						symbol: {
+							type: 'cim',
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMPointSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 10,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[0, 0.65],
+																[8.5, 16.35],
+																[17, 0.65],
+																[0, 0.65],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	0, 0, 0,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 234, 5,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+											rotation: 180,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											offsetY: 6,
+										},
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 10,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	128, 0, 128,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	128, 0, 128,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 14,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	0, 0, 0,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	115, 0, 168,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+									],
+								},
+							},
+						},
+					},
+					{
+						label: 'City Power + Telco + Streetlight',
+						value: 'City Power + Telco + Streetlight', // replace with the second unique value
+						symbol: {
+							type: 'cim',
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMPointSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 10,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[0, 0.65],
+																[8.5, 16.35],
+																[17, 0.65],
+																[0, 0.65],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	0, 0, 0,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 234, 5,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+											rotation: 180,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											offsetY: 6,
+										},
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 10,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	128, 0, 128,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	128, 0, 128,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 14,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	0, 0, 0,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 165, 0,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+									],
+								},
+							},
+						},
+					},
+					{
+						label: 'Dom Power + Telco + Streetlight',
+						value: 'Dom Power + Telco + Streetlight', // replace with the second unique value
+						symbol: {
+							type: 'cim',
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMPointSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 10,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[0, 0.65],
+																[8.5, 16.35],
+																[17, 0.65],
+																[0, 0.65],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	0, 0, 0,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 234, 5,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+											rotation: 180,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											offsetY: 6,
+										},
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 10,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	255, 0, 0,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 0, 0,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 14,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	0, 0, 0,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 165, 0,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+									],
+								},
+							},
+						},
+					},
+					{
+						label: 'Dom Power + City Power + Telco + Streetlight',
+						value: 'Dom Power + City Power + Telco + Streetlight', // replace with the second unique value
+						symbol: {
+							type: 'cim',
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMPointSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 10,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[0, 0.65],
+																[8.5, 16.35],
+																[17, 0.65],
+																[0, 0.65],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	0, 0, 0,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 234, 5,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+											rotation: 180,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											offsetY: 6,
+										},
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0.0,
+												y: 0.0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 5, // Smaller size for the orange circle
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	255, 165, 0,
+																	255,
+																], // Orange color for the stroke
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 165, 0,
+																	255,
+																], // Orange color for the fill
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 10,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	255, 0, 0,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 0, 0,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPoint: {
+												x: 0,
+												y: 0,
+											},
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 14,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 17,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[8.5, 0],
+																[7.02, 0.13],
+																[5.59, 0.51],
+																[4.25, 1.14],
+																[3.04, 1.99],
+																[1.99, 3.04],
+																[1.14, 4.25],
+																[0.51, 5.59],
+																[0.13, 7.02],
+																[0, 8.5],
+																[0.13, 9.98],
+																[0.51, 11.41],
+																[1.14, 12.75],
+																[1.99, 13.96],
+																[3.04, 15.01],
+																[4.25, 15.86],
+																[5.59, 16.49],
+																[7.02, 16.87],
+																[8.5, 17],
+																[9.98, 16.87],
+																[11.41, 16.49],
+																[12.75, 15.86],
+																[13.96, 15.01],
+																[15.01, 13.96],
+																[15.86, 12.75],
+																[16.49, 11.41],
+																[16.87, 9.98],
+																[17, 8.5],
+																[16.87, 7.02],
+																[16.49, 5.59],
+																[15.86, 4.25],
+																[15.01, 3.04],
+																[13.96, 1.99],
+																[12.75, 1.14],
+																[11.41, 0.51],
+																[9.98, 0.13],
+																[8.5, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	128, 0, 128,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	128, 0, 128,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+									],
+								},
+							},
+						},
+					},
 					// Add more unique values and symbols as needed
 				],
 				defaultSymbol: {
 					type: 'simple-marker',
 					style: 'circle',
-					color: 'purple', // color for the third unique value
+					color: 'green', // color for the third unique value
 					size: '16px',
 				}, // Optional: symbol for unmatched values
 				defaultLabel: 'Unknown',
@@ -563,44 +2999,42 @@ Feature Description: ${attributes.featureDescription || ''}
 								symbol: {
 									type: 'CIMLineSymbol',
 									symbolLayers: [
-										// {
-										// 	// white dashed layer at center of the line
-										// 	type: 'CIMSolidStroke',
-										// 	effects: [
-										// 		{
-										// 			type: 'CIMGeometricEffectDashes',
-										// 			dashTemplate: [16, 16, 16, 16], // width of dashes and spacing between the dashes
-										// 			lineDashEnding: 'NoConstraint',
-										// 			controlPointEnding: 'NoConstraint',
-										// 		},
-										// 	],
-										// 	enable: true, // must be set to true in order for the symbol layer to be visible
-										// 	capStyle: 'Butt',
-										// 	joinStyle: 'Round',
-										// 	width: 4,
-
-										// 	color: [255, 165, 0, 255],
-										// },
 										{
-											// lighter green line layer that surrounds the dashes
 											type: 'CIMSolidStroke',
-
 											enable: true,
-											capStyle: 'Butt',
+											capStyle: 'Round',
 											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
 											width: 6,
-											color: [255, 165, 0, 255],
+											color: [251, 148, 4, 255],
 										},
-
-										// {
-										// 	// darker green outline around the line symbol
-										// 	type: 'CIMSolidStroke',
-										// 	enable: true,
-										// 	capStyle: 'Butt',
-										// 	joinStyle: 'Round',
-										// 	width: 6,
-										// 	color: [0, 115, 76, 255],
-										// },
+									],
+								},
+							},
+						}, // Optional: symbol for unmatched values
+					},
+					{
+						label: 'City Power',
+						value: 'City Power', // Second unique value
+						symbol: {
+							type: 'cim',
+							// CIM Line Symbol
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMLineSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 6,
+											color: [128, 0, 128, 255],
+										},
 									],
 								},
 							},
@@ -617,44 +3051,171 @@ Feature Description: ${attributes.featureDescription || ''}
 								symbol: {
 									type: 'CIMLineSymbol',
 									symbolLayers: [
-										// {
-										// 	// white dashed layer at center of the line
-										// 	type: 'CIMSolidStroke',
-										// 	effects: [
-										// 		{
-										// 			type: 'CIMGeometricEffectDashes',
-										// 			dashTemplate: [16, 16, 16, 16], // width of dashes and spacing between the dashes
-										// 			lineDashEnding: 'NoConstraint',
-										// 			controlPointEnding: 'NoConstraint',
-										// 		},
-										// 	],
-										// 	enable: true, // must be set to true in order for the symbol layer to be visible
-										// 	capStyle: 'Butt',
-										// 	joinStyle: 'Round',
-										// 	width: 4,
-
-										// 	color: [255, 165, 0, 255],
-										// },
-
 										{
-											// lighter green line layer that surrounds the dashes
 											type: 'CIMSolidStroke',
 											enable: true,
-											capStyle: 'Butt',
+											capStyle: 'Round',
 											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
 											width: 6,
 											color: [255, 0, 0, 255],
 										},
-
-										// {
-										// 	// darker green outline around the line symbol
-										// 	type: 'CIMSolidStroke',
-										// 	enable: true,
-										// 	capStyle: 'Butt',
-										// 	joinStyle: 'Round',
-										// 	width: 6,
-										// 	color: [0, 115, 76, 255],
-										// },
+									],
+								},
+							},
+						}, // Optional: symbol for unmatched values
+					},
+					{
+						label: 'Dom Power + Telco',
+						value: 'Dom Power + Telco', // Second unique value
+						symbol: {
+							type: 'cim',
+							// CIM Line Symbol
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMLineSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 3,
+											color: [251, 148, 4, 255],
+										},
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 8,
+											color: [255, 0, 0, 255],
+										},
+									],
+								},
+							},
+						}, // Optional: symbol for unmatched values
+					},
+					{
+						label: 'City Power + Telco',
+						value: 'City Power + Telco', // Second unique value
+						symbol: {
+							type: 'cim',
+							// CIM Line Symbol
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMLineSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 3,
+											color: [251, 148, 4, 255],
+										},
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 8,
+											color: [128, 0, 128, 255],
+										},
+									],
+								},
+							},
+						}, // Optional: symbol for unmatched values
+					},
+					{
+						label: 'Dom Power + City Power',
+						value: 'Dom Power + City Power', // Second unique value
+						symbol: {
+							type: 'cim',
+							// CIM Line Symbol
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMLineSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 3,
+											color: [128, 0, 128, 255],
+										},
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 8,
+											color: [255, 0, 0, 255],
+										},
+									],
+								},
+							},
+						},
+						// Optional: symbol for unmatched values
+					},
+					{
+						label: 'Dom Power + City Power + Telco',
+						value: 'Dom Power + City Power + Telco', // Second unique value
+						symbol: {
+							type: 'cim',
+							// CIM Line Symbol
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMLineSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 2,
+											color: [251, 148, 4, 255],
+										},
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 8,
+											color: [128, 0, 128, 255],
+										},
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 12,
+											color: [255, 0, 0, 255],
+										},
 									],
 								},
 							},
@@ -663,7 +3224,7 @@ Feature Description: ${attributes.featureDescription || ''}
 
 					// Add more unique values and symbols as needed
 				],
-				defaultLabel: 'Dom Power + City Power + Telco',
+				defaultLabel: 'Unknown',
 				defaultSymbol: {
 					type: 'cim',
 					// CIM Line Symbol
@@ -672,60 +3233,16 @@ Feature Description: ${attributes.featureDescription || ''}
 						symbol: {
 							type: 'CIMLineSymbol',
 							symbolLayers: [
-								// {
-								// 	// white dashed layer at center of the line
-								// 	type: 'CIMSolidStroke',
-								// 	effects: [
-								// 		{
-								// 			type: 'CIMGeometricEffectDashes',
-								// 			dashTemplate: [16, 16, 16, 16], // width of dashes and spacing between the dashes
-								// 			lineDashEnding: 'NoConstraint',
-								// 			controlPointEnding: 'NoConstraint',
-								// 		},
-								// 	],
-								// 	enable: true, // must be set to true in order for the symbol layer to be visible
-								// 	capStyle: 'Butt',
-								// 	joinStyle: 'Round',
-								// 	width: 4,
-
-								// 	color: [255, 165, 0, 255],
-								// },
 								{
-									// lighter green line layer that surrounds the dashes
 									type: 'CIMSolidStroke',
 									enable: true,
-									capStyle: 'Butt',
+									capStyle: 'Round',
 									joinStyle: 'Round',
-									width: 3,
-									color: [255, 0, 0, 255],
+									lineStyle3D: 'Strip',
+									miterLimit: 10,
+									width: 10,
+									color: [0, 255, 0, 255],
 								},
-								{
-									// lighter green line layer that surrounds the dashes
-									type: 'CIMSolidStroke',
-									// effects: [
-									// 	{
-									// 		type: 'CIMGeometricEffectDashes',
-									// 		dashTemplate: [6, 6, 6, 6], // width of dashes and spacing between the dashes
-									// 		lineDashEnding: 'NoConstraint',
-									// 		controlPointEnding: 'NoConstraint',
-									// 	},
-									// ],
-									enable: true,
-									capStyle: 'Butt',
-									joinStyle: 'Round',
-									width: 6,
-									color: [255, 165, 0, 255],
-								},
-
-								// {
-								// 	// darker green outline around the line symbol
-								// 	type: 'CIMSolidStroke',
-								// 	enable: true,
-								// 	capStyle: 'Butt',
-								// 	joinStyle: 'Round',
-								// 	width: 6,
-								// 	color: [0, 115, 76, 255],
-								// },
 							],
 						},
 					},
@@ -745,53 +3262,58 @@ Feature Description: ${attributes.featureDescription || ''}
 								symbol: {
 									type: 'CIMLineSymbol',
 									symbolLayers: [
-										// {
-										// 	// white dashed layer at center of the line
-										// 	type: 'CIMSolidStroke',
-										// 	effects: [
-										// 		{
-										// 			type: 'CIMGeometricEffectDashes',
-										// 			dashTemplate: [16, 16, 16, 16], // width of dashes and spacing between the dashes
-										// 			lineDashEnding: 'NoConstraint',
-										// 			controlPointEnding: 'NoConstraint',
-										// 		},
-										// 	],
-										// 	enable: true, // must be set to true in order for the symbol layer to be visible
-										// 	capStyle: 'Butt',
-										// 	joinStyle: 'Round',
-										// 	width: 4,
-
-										// 	color: [255, 165, 0, 255],
-										// },
 										{
-											// lighter green line layer that surrounds the dashes
 											type: 'CIMSolidStroke',
-											effects: [
-												{
-													type: 'CIMGeometricEffectDashes',
-													dashTemplate: [6, 6, 6, 6], // width of dashes and spacing between the dashes
-													lineDashEnding:
-														'NoConstraint',
-													controlPointEnding:
-														'NoConstraint',
-												},
-											],
 											enable: true,
-											capStyle: 'Butt',
+											capStyle: 'Round',
 											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
 											width: 6,
-											color: [255, 165, 0, 255],
+											color: [251, 148, 4, 255],
 										},
-
-										// {
-										// 	// darker green outline around the line symbol
-										// 	type: 'CIMSolidStroke',
-										// 	enable: true,
-										// 	capStyle: 'Butt',
-										// 	joinStyle: 'Round',
-										// 	width: 6,
-										// 	color: [0, 115, 76, 255],
-										// },
+									],
+									effects: [
+										{
+											type: 'CIMGeometricEffectDashes',
+											dashTemplate: [12, 12, 12, 12], // width of dashes and spacing between the dashes
+											lineDashEnding: 'NoConstraint',
+											controlPointEnding: 'NoConstraint',
+										},
+									],
+								},
+							},
+						}, // Optional: symbol for unmatched values
+					},
+					{
+						label: 'City Power',
+						value: 'City Power', // Second unique value
+						symbol: {
+							type: 'cim',
+							// CIM Line Symbol
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMLineSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 6,
+											color: [128, 0, 128, 255],
+										},
+									],
+									effects: [
+										{
+											type: 'CIMGeometricEffectDashes',
+											dashTemplate: [12, 12, 12, 12], // width of dashes and spacing between the dashes
+											lineDashEnding: 'NoConstraint',
+											controlPointEnding: 'NoConstraint',
+										},
 									],
 								},
 							},
@@ -808,54 +3330,211 @@ Feature Description: ${attributes.featureDescription || ''}
 								symbol: {
 									type: 'CIMLineSymbol',
 									symbolLayers: [
-										// {
-										// 	// white dashed layer at center of the line
-										// 	type: 'CIMSolidStroke',
-										// 	effects: [
-										// 		{
-										// 			type: 'CIMGeometricEffectDashes',
-										// 			dashTemplate: [16, 16, 16, 16], // width of dashes and spacing between the dashes
-										// 			lineDashEnding: 'NoConstraint',
-										// 			controlPointEnding: 'NoConstraint',
-										// 		},
-										// 	],
-										// 	enable: true, // must be set to true in order for the symbol layer to be visible
-										// 	capStyle: 'Butt',
-										// 	joinStyle: 'Round',
-										// 	width: 4,
-
-										// 	color: [255, 165, 0, 255],
-										// },
-
 										{
-											// lighter green line layer that surrounds the dashes
 											type: 'CIMSolidStroke',
-											effects: [
-												{
-													type: 'CIMGeometricEffectDashes',
-													dashTemplate: [6, 6, 6, 6], // width of dashes and spacing between the dashes
-													lineDashEnding:
-														'NoConstraint',
-													controlPointEnding:
-														'NoConstraint',
-												},
-											],
 											enable: true,
-											capStyle: 'Butt',
+											capStyle: 'Round',
 											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
 											width: 6,
 											color: [255, 0, 0, 255],
 										},
-
-										// {
-										// 	// darker green outline around the line symbol
-										// 	type: 'CIMSolidStroke',
-										// 	enable: true,
-										// 	capStyle: 'Butt',
-										// 	joinStyle: 'Round',
-										// 	width: 6,
-										// 	color: [0, 115, 76, 255],
-										// },
+									],
+									effects: [
+										{
+											type: 'CIMGeometricEffectDashes',
+											dashTemplate: [12, 12, 12, 12], // width of dashes and spacing between the dashes
+											lineDashEnding: 'NoConstraint',
+											controlPointEnding: 'NoConstraint',
+										},
+									],
+								},
+							},
+						}, // Optional: symbol for unmatched values
+					},
+					{
+						label: 'Dom Power + Telco',
+						value: 'Dom Power + Telco', // Second unique value
+						symbol: {
+							type: 'cim',
+							// CIM Line Symbol
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMLineSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 3,
+											color: [251, 148, 4, 255],
+										},
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 8,
+											color: [255, 0, 0, 255],
+										},
+									],
+									effects: [
+										{
+											type: 'CIMGeometricEffectDashes',
+											dashTemplate: [12, 12, 12, 12], // width of dashes and spacing between the dashes
+											lineDashEnding: 'NoConstraint',
+											controlPointEnding: 'NoConstraint',
+										},
+									],
+								},
+							},
+						}, // Optional: symbol for unmatched values
+					},
+					{
+						label: 'City Power + Telco',
+						value: 'City Power + Telco', // Second unique value
+						symbol: {
+							type: 'cim',
+							// CIM Line Symbol
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMLineSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 3,
+											color: [251, 148, 4, 255],
+										},
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 8,
+											color: [128, 0, 128, 255],
+										},
+									],
+									effects: [
+										{
+											type: 'CIMGeometricEffectDashes',
+											dashTemplate: [12, 12, 12, 12], // width of dashes and spacing between the dashes
+											lineDashEnding: 'NoConstraint',
+											controlPointEnding: 'NoConstraint',
+										},
+									],
+								},
+							},
+						}, // Optional: symbol for unmatched values
+					},
+					{
+						label: 'Dom Power + City Power',
+						value: 'Dom Power + City Power', // Second unique value
+						symbol: {
+							type: 'cim',
+							// CIM Line Symbol
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMLineSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 3,
+											color: [128, 0, 128, 255],
+										},
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 8,
+											color: [255, 0, 0, 255],
+										},
+									],
+									effects: [
+										{
+											type: 'CIMGeometricEffectDashes',
+											dashTemplate: [12, 12, 12, 12], // width of dashes and spacing between the dashes
+											lineDashEnding: 'NoConstraint',
+											controlPointEnding: 'NoConstraint',
+										},
+									],
+								},
+							},
+						},
+						// Optional: symbol for unmatched values
+					},
+					{
+						label: 'Dom Power + City Power + Telco',
+						value: 'Dom Power + City Power + Telco', // Second unique value
+						symbol: {
+							type: 'cim',
+							// CIM Line Symbol
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMLineSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 2,
+											color: [251, 148, 4, 255],
+										},
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 8,
+											color: [128, 0, 128, 255],
+										},
+										{
+											type: 'CIMSolidStroke',
+											enable: true,
+											capStyle: 'Round',
+											joinStyle: 'Round',
+											lineStyle3D: 'Strip',
+											miterLimit: 10,
+											width: 12,
+											color: [255, 0, 0, 255],
+										},
+									],
+									effects: [
+										{
+											type: 'CIMGeometricEffectDashes',
+											dashTemplate: [12, 12, 12, 12], // width of dashes and spacing between the dashes
+											lineDashEnding: 'NoConstraint',
+											controlPointEnding: 'NoConstraint',
+										},
 									],
 								},
 							},
@@ -864,7 +3543,7 @@ Feature Description: ${attributes.featureDescription || ''}
 
 					// Add more unique values and symbols as needed
 				],
-				defaultLabel: 'Dom Power + City Power + Telco',
+				defaultLabel: 'Unknown',
 				defaultSymbol: {
 					type: 'cim',
 					// CIM Line Symbol
@@ -873,68 +3552,44 @@ Feature Description: ${attributes.featureDescription || ''}
 						symbol: {
 							type: 'CIMLineSymbol',
 							symbolLayers: [
-								// {
-								// 	// white dashed layer at center of the line
-								// 	type: 'CIMSolidStroke',
-								// 	effects: [
-								// 		{
-								// 			type: 'CIMGeometricEffectDashes',
-								// 			dashTemplate: [16, 16, 16, 16], // width of dashes and spacing between the dashes
-								// 			lineDashEnding: 'NoConstraint',
-								// 			controlPointEnding: 'NoConstraint',
-								// 		},
-								// 	],
-								// 	enable: true, // must be set to true in order for the symbol layer to be visible
-								// 	capStyle: 'Butt',
-								// 	joinStyle: 'Round',
-								// 	width: 4,
-
-								// 	color: [255, 165, 0, 255],
-								// },
 								{
-									// lighter green line layer that surrounds the dashes
 									type: 'CIMSolidStroke',
-									effects: [
-										{
-											type: 'CIMGeometricEffectDashes',
-											dashTemplate: [6, 6, 6, 6], // width of dashes and spacing between the dashes
-											lineDashEnding: 'NoConstraint',
-											controlPointEnding: 'NoConstraint',
-										},
-									],
 									enable: true,
-									capStyle: 'Butt',
+									capStyle: 'Round',
 									joinStyle: 'Round',
+									lineStyle3D: 'Strip',
+									miterLimit: 10,
 									width: 3,
+									color: [251, 148, 4, 255],
+								},
+								{
+									type: 'CIMSolidStroke',
+									enable: true,
+									capStyle: 'Round',
+									joinStyle: 'Round',
+									lineStyle3D: 'Strip',
+									miterLimit: 10,
+									width: 8,
+									color: [128, 0, 128, 255],
+								},
+								{
+									type: 'CIMSolidStroke',
+									enable: true,
+									capStyle: 'Round',
+									joinStyle: 'Round',
+									lineStyle3D: 'Strip',
+									miterLimit: 10,
+									width: 10,
 									color: [255, 0, 0, 255],
 								},
+							],
+							effects: [
 								{
-									// lighter green line layer that surrounds the dashes
-									type: 'CIMSolidStroke',
-									effects: [
-										{
-											type: 'CIMGeometricEffectDashes',
-											dashTemplate: [6, 6, 6, 6], // width of dashes and spacing between the dashes
-											lineDashEnding: 'NoConstraint',
-											controlPointEnding: 'NoConstraint',
-										},
-									],
-									enable: true,
-									capStyle: 'Butt',
-									joinStyle: 'Round',
-									width: 6,
-									color: [255, 165, 0, 255],
+									type: 'CIMGeometricEffectDashes',
+									dashTemplate: [12, 12, 12, 12], // width of dashes and spacing between the dashes
+									lineDashEnding: 'NoConstraint',
+									controlPointEnding: 'NoConstraint',
 								},
-
-								// {
-								// 	// darker green outline around the line symbol
-								// 	type: 'CIMSolidStroke',
-								// 	enable: true,
-								// 	capStyle: 'Butt',
-								// 	joinStyle: 'Round',
-								// 	width: 6,
-								// 	color: [0, 115, 76, 255],
-								// },
 							],
 						},
 					},
@@ -1051,6 +3706,7 @@ Feature Description: ${attributes.featureDescription || ''}
 				renderer: pointRenderer,
 				// minScale: 5000,
 			});
+			pointLayerRef.current = pointLayer;
 			const groundFeatureLayer = new FeatureLayer({
 				title: 'Ground Features',
 				source: [], // This is required to create an empty layer
@@ -1116,7 +3772,7 @@ Feature Description: ${attributes.featureDescription || ''}
 				renderer: groundFeatureRenderer,
 				// minScale: 5000,
 			});
-
+			groundFeatureLayerRef.current = groundFeatureLayer;
 			const polylineLayer = new FeatureLayer({
 				title: 'Overhead Lines',
 				source: [], // This is required to create an empty layer
@@ -1172,13 +3828,14 @@ Feature Description: ${attributes.featureDescription || ''}
 				geometryType: 'polyline',
 				spatialReference: { wkid: 4326 }, // Set your spatial reference
 				popupTemplate: {
-					title: 'Polyline',
+					title: 'Overhead Line',
 					actions: [polylineEditThisAction, polylineDeleteThisAction], // Define actions if needed
 					content: polylinePopupContent, // Define content for the popup
 				},
 				renderer: polylineRenderer, // Define your renderer as needed
 				// minScale: 5000,
 			});
+			polylineLayerRef.current = polylineLayer;
 
 			const undergroundLinesLayer = new FeatureLayer({
 				title: 'Underground Lines',
@@ -1235,6 +3892,8 @@ Feature Description: ${attributes.featureDescription || ''}
 				renderer: undergroundLineRenderer, // Define your renderer as needed
 				// minScale: 5000,
 			});
+			undergroundLinesLayerRef.current = undergroundLinesLayer;
+
 			const fetchPoints = async () => {
 				console.log('fired');
 				try {
@@ -1285,6 +3944,7 @@ Feature Description: ${attributes.featureDescription || ''}
 			pointLayer.when(() => {
 				fetchPoints();
 			});
+
 			const fetchGroundFeatures = async () => {
 				console.log('fired');
 				try {
@@ -2120,6 +4780,23 @@ Feature Description: ${attributes.featureDescription || ''}
 				view: view,
 				content: legend,
 			});
+
+			const utilityTypeElement =
+				document.getElementById('utilityType-filter');
+
+			// click event handler for seasons choices
+
+			// User clicked on Winter, Spring, Summer or Fall
+			// set an attribute filter on flood warnings layer view
+			// to display the warnings issued in that season
+
+			const utilityTypeExpand = new Expand({
+				view: view,
+				content: utilityTypeElement,
+				expandIcon: 'filter',
+				group: 'bottom-left',
+			});
+			view.ui.add(utilityTypeExpand, 'bottom-left');
 			view.ui.add(search, {
 				position: 'top-right',
 			});
@@ -2705,8 +5382,110 @@ Feature Description: ${attributes.featureDescription || ''}
 		}
 	}, []);
 
+	const handleFilter = (event) => {
+		const selectedUtilityType = event.target.value;
+		const checked = event.target.checked;
+
+		setFilterPhraseState((prev) => {
+			if (checked) {
+				// Add the selected utility type if checked
+				return [...prev, selectedUtilityType];
+			} else {
+				// Remove the selected utility type if unchecked
+				return prev.filter((item) => item !== selectedUtilityType);
+			}
+		});
+	};
+	const applyFilter = () => {
+		// Get the current state of filterPhraseState
+		const activeFilters = filterPhrase;
+		console.log(activeFilters);
+		// Build the definitionExpression by mapping and joining the filters
+		const filterPhrase2 = activeFilters
+			.map((type) => `utilityType LIKE '%${type}%'`)
+			.join(' OR ');
+
+		// Apply the filter to all layers
+		pointLayerRef.current.definitionExpression = filterPhrase2;
+		undergroundLinesLayerRef.current.definitionExpression = filterPhrase2;
+		polylineLayerRef.current.definitionExpression = filterPhrase2;
+		groundFeatureLayerRef.current.definitionExpression = filterPhrase2;
+	};
 	return (
 		<>
+			<div
+				id='utilityType-filter'
+				class='esri-widget'
+			>
+				<label>
+					<input
+						type='checkbox'
+						name='utilityType'
+						value='Telco'
+						onChange={handleFilter}
+						defaultChecked
+					/>
+					Telco
+				</label>
+				<label>
+					<input
+						type='checkbox'
+						name='utilityType'
+						value='City Power'
+						onChange={handleFilter}
+						defaultChecked
+					/>
+					City Power
+				</label>
+				<label>
+					<input
+						type='checkbox'
+						name='utilityType'
+						value='Dom Power'
+						onChange={handleFilter}
+						defaultChecked
+					/>
+					Dom Power
+				</label>
+				<label>
+					<input
+						type='checkbox'
+						name='utilityType'
+						value='Poles'
+						onChange={handleFilter}
+					/>
+					Poles
+				</label>
+				<label>
+					<input
+						type='checkbox'
+						name='utilityType'
+						value='Ground Features'
+						onChange={handleFilter}
+					/>
+					Ground Features
+				</label>
+				<label>
+					<input
+						type='checkbox'
+						name='utilityType'
+						value='Overhead Lines'
+						onChange={handleFilter}
+					/>
+					Overhead Lines
+				</label>
+				<label>
+					<input
+						type='checkbox'
+						name='utilityType'
+						value='Dom Power'
+						onChange={handleFilter}
+					/>
+					Underground Lines
+				</label>
+				<button onClick={applyFilter}>Apply Filter</button>
+			</div>
+
 			{showPointForm && (
 				<PointDescriptionForm
 					onSubmit={showPointForm.onSubmit}
