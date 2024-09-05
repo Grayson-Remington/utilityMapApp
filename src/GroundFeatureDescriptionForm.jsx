@@ -10,6 +10,7 @@ const GroundFeatureDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 		featureDimensions: '',
 		featureDescription: '',
 		laterals: '',
+		notes: '',
 	});
 
 	useEffect(() => {
@@ -22,6 +23,7 @@ const GroundFeatureDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 				featureDimensions: graphic.attributes.featureDimensions || '',
 				featureDescription: graphic.attributes.featureDescription || '',
 				laterals: graphic.attributes.laterals || '',
+				notes: graphic.attributes.notes || '',
 			});
 		}
 	}, [graphic]);
@@ -153,6 +155,28 @@ const GroundFeatureDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 									value={
 										groundFeatureDescription.featureDescription
 									}
+									onChange={handleChange}
+								/>
+							</div>
+						</div>
+						<div className='input-row'>
+							<div className='input-field'>
+								<label>Notes</label>
+								<input
+									style={{
+										height: '60px',
+										whiteSpace: 'pre-wrap', // Wrap text inside the input
+										overflow: 'auto', // Allow scrolling if needed
+										padding: '8px',
+										fontFamily: 'inherit',
+										fontSize: 'inherit',
+										lineHeight: '1.5',
+										borderRadius: '4px',
+										border: '1px solid #ccc',
+									}}
+									type='text' // Use 'text' instead of 'textarea' for the input type
+									name='notes'
+									value={groundFeatureDescription.notes}
 									onChange={handleChange}
 								/>
 							</div>

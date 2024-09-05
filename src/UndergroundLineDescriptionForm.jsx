@@ -14,6 +14,7 @@ const UndergroundLineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 					utilityWires: '',
 				},
 			],
+			notes: '',
 		});
 
 	useEffect(() => {
@@ -27,6 +28,7 @@ const UndergroundLineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 					typeof graphic.attributes.utilityConduits === 'string'
 						? JSON.parse(graphic.attributes.utilityConduits)
 						: [],
+				notes: graphic.attributes.notes || '',
 			});
 		}
 	}, [graphic]);
@@ -230,7 +232,28 @@ const UndergroundLineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 						>
 							Add Utility Conduit
 						</button>
-
+						<div className='input-row'>
+							<div className='input-field'>
+								<label>Notes</label>
+								<input
+									style={{
+										height: '60px',
+										whiteSpace: 'pre-wrap', // Wrap text inside the input
+										overflow: 'auto', // Allow scrolling if needed
+										padding: '8px',
+										fontFamily: 'inherit',
+										fontSize: 'inherit',
+										lineHeight: '1.5',
+										borderRadius: '4px',
+										border: '1px solid #ccc',
+									}}
+									type='text' // Use 'text' instead of 'textarea' for the input type
+									name='notes'
+									value={undergroundLineDescription.notes}
+									onChange={handleChange}
+								/>
+							</div>
+						</div>
 						{/* Form buttons */}
 						<div className='modal-buttons'>
 							<button type='submit'>Submit</button>

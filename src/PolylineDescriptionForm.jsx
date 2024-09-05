@@ -15,6 +15,7 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 				utilityLaterals: '',
 			},
 		],
+		notes: '',
 	});
 
 	useEffect(() => {
@@ -30,6 +31,7 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 					typeof graphic.attributes.utilityAttachments === 'string'
 						? JSON.parse(graphic.attributes.utilityAttachments)
 						: [],
+				notes: graphic.attributes.notes || '',
 			});
 		}
 	}, [graphic]);
@@ -304,7 +306,28 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 								</button>
 							</>
 						)}
-
+						<div className='input-row'>
+							<div className='input-field'>
+								<label>Notes</label>
+								<input
+									style={{
+										height: '60px',
+										whiteSpace: 'pre-wrap', // Wrap text inside the input
+										overflow: 'auto', // Allow scrolling if needed
+										padding: '8px',
+										fontFamily: 'inherit',
+										fontSize: 'inherit',
+										lineHeight: '1.5',
+										borderRadius: '4px',
+										border: '1px solid #ccc',
+									}}
+									type='text' // Use 'text' instead of 'textarea' for the input type
+									name='notes'
+									value={polylineDescription.notes}
+									onChange={handleChange}
+								/>
+							</div>
+						</div>
 						{/* Form buttons */}
 						<div className='modal-buttons'>
 							<button type='submit'>Submit</button>

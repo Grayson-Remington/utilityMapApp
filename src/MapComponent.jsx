@@ -2,6 +2,8 @@ import React, { useRef, useEffect, useState, act } from 'react';
 import axios from 'axios';
 import MapView from '@arcgis/core/views/MapView';
 import Expand from '@arcgis/core/widgets/Expand.js';
+import { useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import Search from '@arcgis/core/widgets/Search';
 import FieldElement from '@arcgis/core/form/elements/FieldElement.js';
@@ -38,19 +40,30 @@ const MapComponent = () => {
 	const polylineLayerRef = useRef(null);
 	const undergroundLinesLayerRef = useRef(null);
 	const [editorState, setEditorState] = useState('');
-	const [filterPhrase, setFilterPhraseState] = useState([
+	const [utilityTypeFilterState, setUtilityTypeFilterState] = useState([
 		'None',
 		'Dom Power',
 		'City Power',
 		'Telco',
 	]);
-
+	const [featureLayerFilterState, setFeatureLayerFilterState] = useState([
+		'None',
+		'pointLayer',
+		'undergroundLinesLayer',
+		'polylineLayer',
+		'groundFeatureLayer',
+	]);
 	const [showPointForm, setShowPointForm] = useState(false);
 	const [showGroundFeatureForm, setShowGroundFeatureForm] = useState(false);
 
 	const [showPolylineForm, setShowPolylineForm] = useState(false);
 	const [showUndergroundLineForm, setShowUndergroundLineForm] =
 		useState(false);
+
+	const location = useLocation();
+	const { authentication } = location.state || 'false';
+	const navigate = useNavigate();
+	console.log(authentication, 'authenticated');
 
 	const getPointDescription = (graphic) => {
 		return new Promise((resolve, reject) => {
@@ -130,6 +143,9 @@ const MapComponent = () => {
 	};
 	let isProgrammaticEdit = false;
 	useEffect(() => {
+		if (authentication !== 'true') {
+			navigate('/');
+		}
 		if (mapDiv.current) {
 			const pointEditThisAction = {
 				title: 'Edit feature',
@@ -290,7 +306,8 @@ ${
 	
 </table>`
 		: ''
-}</div>
+}
+Notes: ${attributes.notes || ''}</div>
 					  `;
 				return div;
 			}
@@ -347,6 +364,7 @@ ${
 </table>
 Feature Description: ${attributes.featureDescription || ''}
 <br/>
+Notes: ${attributes.notes || ''}
 
 
 
@@ -437,7 +455,7 @@ Feature Description: ${attributes.featureDescription || ''}
     ${utilityAttachmentsHTML}
     
 	
-</table></div>
+</table> Notes: ${attributes.notes || ''}</div>
 					  `;
 				return div;
 			}
@@ -490,7 +508,7 @@ Feature Description: ${attributes.featureDescription || ''}
     ${utilityConduitsHTML}
     
 	
-</table></div>
+</table> Notes: ${attributes.notes || ''}</div>
 					  `;
 				return div;
 			}
@@ -3694,6 +3712,12 @@ Feature Description: ${attributes.featureDescription || ''}
 						type: 'string',
 						editable: true,
 					},
+					{
+						name: 'notes',
+						alias: 'Notes',
+						type: 'string',
+						editable: true,
+					},
 				],
 				objectIdField: 'ObjectID',
 				geometryType: 'point',
@@ -3754,6 +3778,12 @@ Feature Description: ${attributes.featureDescription || ''}
 					{
 						name: 'featureDescription',
 						alias: 'Ground Feature Description',
+						type: 'string',
+						editable: true,
+					},
+					{
+						name: 'notes',
+						alias: 'Notes',
 						type: 'string',
 						editable: true,
 					},
@@ -3823,6 +3853,12 @@ Feature Description: ${attributes.featureDescription || ''}
 						type: 'string',
 						editable: true,
 					},
+					{
+						name: 'notes',
+						alias: 'Notes',
+						type: 'string',
+						editable: true,
+					},
 				],
 				objectIdField: 'ObjectID',
 				geometryType: 'polyline',
@@ -3874,6 +3910,12 @@ Feature Description: ${attributes.featureDescription || ''}
 					{
 						name: 'utilityConduits',
 						alias: 'Utility Conduits',
+						type: 'string',
+						editable: true,
+					},
+					{
+						name: 'notes',
+						alias: 'Notes',
 						type: 'string',
 						editable: true,
 					},
@@ -5382,11 +5424,11 @@ Feature Description: ${attributes.featureDescription || ''}
 		}
 	}, []);
 
-	const handleFilter = (event) => {
+	const handleUtilityTypeFilter = (event) => {
 		const selectedUtilityType = event.target.value;
 		const checked = event.target.checked;
 
-		setFilterPhraseState((prev) => {
+		setUtilityTypeFilterState((prev) => {
 			if (checked) {
 				// Add the selected utility type if checked
 				return [...prev, selectedUtilityType];
@@ -5396,20 +5438,46 @@ Feature Description: ${attributes.featureDescription || ''}
 			}
 		});
 	};
+	const handleFeatureLayerFilter = (event) => {
+		const selectedFeatureLayer = event.target.value;
+		const checked = event.target.checked;
+
+		setFeatureLayerFilterState((prev) => {
+			if (checked) {
+				// Add the selected utility type if checked
+				return [...prev, selectedFeatureLayer];
+			} else {
+				// Remove the selected utility type if unchecked
+				return prev.filter((item) => item !== selectedFeatureLayer);
+			}
+		});
+	};
 	const applyFilter = () => {
 		// Get the current state of filterPhraseState
-		const activeFilters = filterPhrase;
-		console.log(activeFilters);
+		const utilityTypeFilters = utilityTypeFilterState;
+		const featureLayerFilters = featureLayerFilterState;
 		// Build the definitionExpression by mapping and joining the filters
-		const filterPhrase2 = activeFilters
+		const utilityTypeFilterLocal = utilityTypeFilters
 			.map((type) => `utilityType LIKE '%${type}%'`)
 			.join(' OR ');
 
 		// Apply the filter to all layers
-		pointLayerRef.current.definitionExpression = filterPhrase2;
-		undergroundLinesLayerRef.current.definitionExpression = filterPhrase2;
-		polylineLayerRef.current.definitionExpression = filterPhrase2;
-		groundFeatureLayerRef.current.definitionExpression = filterPhrase2;
+		pointLayerRef.current.definitionExpression = utilityTypeFilterLocal;
+		undergroundLinesLayerRef.current.definitionExpression =
+			utilityTypeFilterLocal;
+		polylineLayerRef.current.definitionExpression = utilityTypeFilterLocal;
+		groundFeatureLayerRef.current.definitionExpression =
+			utilityTypeFilterLocal;
+
+		pointLayerRef.current.visible =
+			featureLayerFilters.includes('pointLayer');
+		undergroundLinesLayerRef.current.visible = featureLayerFilters.includes(
+			'undergroundLinesLayer'
+		);
+		polylineLayerRef.current.visible =
+			featureLayerFilters.includes('polylineLayer');
+		groundFeatureLayerRef.current.visible =
+			featureLayerFilters.includes('groundFeatureLayer');
 	};
 	return (
 		<>
@@ -5422,7 +5490,7 @@ Feature Description: ${attributes.featureDescription || ''}
 						type='checkbox'
 						name='utilityType'
 						value='Telco'
-						onChange={handleFilter}
+						onChange={handleUtilityTypeFilter}
 						defaultChecked
 					/>
 					Telco
@@ -5432,7 +5500,7 @@ Feature Description: ${attributes.featureDescription || ''}
 						type='checkbox'
 						name='utilityType'
 						value='City Power'
-						onChange={handleFilter}
+						onChange={handleUtilityTypeFilter}
 						defaultChecked
 					/>
 					City Power
@@ -5442,7 +5510,7 @@ Feature Description: ${attributes.featureDescription || ''}
 						type='checkbox'
 						name='utilityType'
 						value='Dom Power'
-						onChange={handleFilter}
+						onChange={handleUtilityTypeFilter}
 						defaultChecked
 					/>
 					Dom Power
@@ -5451,8 +5519,9 @@ Feature Description: ${attributes.featureDescription || ''}
 					<input
 						type='checkbox'
 						name='utilityType'
-						value='Poles'
-						onChange={handleFilter}
+						value='pointLayer'
+						onChange={handleFeatureLayerFilter}
+						defaultChecked
 					/>
 					Poles
 				</label>
@@ -5460,8 +5529,9 @@ Feature Description: ${attributes.featureDescription || ''}
 					<input
 						type='checkbox'
 						name='utilityType'
-						value='Ground Features'
-						onChange={handleFilter}
+						value='groundFeatureLayer'
+						onChange={handleFeatureLayerFilter}
+						defaultChecked
 					/>
 					Ground Features
 				</label>
@@ -5469,8 +5539,9 @@ Feature Description: ${attributes.featureDescription || ''}
 					<input
 						type='checkbox'
 						name='utilityType'
-						value='Overhead Lines'
-						onChange={handleFilter}
+						value='polylineLayer'
+						onChange={handleFeatureLayerFilter}
+						defaultChecked
 					/>
 					Overhead Lines
 				</label>
@@ -5478,8 +5549,9 @@ Feature Description: ${attributes.featureDescription || ''}
 					<input
 						type='checkbox'
 						name='utilityType'
-						value='Dom Power'
-						onChange={handleFilter}
+						value='undergroundLinesLayer'
+						onChange={handleFeatureLayerFilter}
+						defaultChecked
 					/>
 					Underground Lines
 				</label>
