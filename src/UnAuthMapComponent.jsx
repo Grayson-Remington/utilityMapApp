@@ -56,7 +56,6 @@ function UnAuthMapComponent({ onLoginSuccess }) {
 		navigate('/edit-map', {
 			state: { authentication: 'true' },
 		});
-		window.location.reload();
 	};
 
 	const handlePasswordSubmit = async (event) => {
@@ -4076,6 +4075,7 @@ Notes: ${attributes.notes || ''}
 			undergroundLinesLayerRef.current = null;
 			polylineLayerRef.current = null;
 			groundFeatureLayerRef.current = null;
+			window.location.reload();
 		};
 	}, []);
 	const handleUtilityTypeFilter = (event) => {

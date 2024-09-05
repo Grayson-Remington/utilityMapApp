@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-
+import HomePage from './HomePage';
 import MapComponent from './MapComponent';
 import UnAuthMapComponent from './UnAuthMapComponent';
 function App() {
@@ -15,6 +15,10 @@ function App() {
 			<Routes>
 				<Route
 					path='/'
+					element={<HomePage />}
+				/>
+				<Route
+					path='/map'
 					element={
 						<UnAuthMapComponent
 							onLoginSuccess={handleLoginSuccess}

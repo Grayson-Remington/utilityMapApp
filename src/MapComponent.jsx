@@ -144,7 +144,7 @@ const MapComponent = () => {
 	let isProgrammaticEdit = false;
 	useEffect(() => {
 		if (authentication !== 'true') {
-			navigate('/');
+			navigate('/map');
 		}
 		if (mapDiv.current) {
 			const pointEditThisAction = {
@@ -5422,6 +5422,14 @@ Notes: ${attributes.notes || ''}
 				);
 			});
 		}
+		return () => {
+			console.log('Cleanup due to dependency change:');
+			pointLayerRef.current = null;
+			undergroundLinesLayerRef.current = null;
+			polylineLayerRef.current = null;
+			groundFeatureLayerRef.current = null;
+			window.location.reload();
+		};
 	}, []);
 
 	const handleUtilityTypeFilter = (event) => {
