@@ -5483,7 +5483,7 @@ Notes: ${attributes.notes || ''}
 		<>
 			<div
 				id='utilityType-filter'
-				class='esri-widget'
+				className='esri-widget'
 			>
 				<label>
 					<input
