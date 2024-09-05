@@ -9,8 +9,19 @@ const HomePage = () => {
 
 	return (
 		<>
-			<h1>Welcome</h1>
-			<button onClick={() => navigate('/map')}>Map</button>
+			<div className='homepage-container'>
+				<div className='homepage-title'>Dry Utilities</div>
+				<img
+					className='utility_pole_img'
+					src='utility_pole.jpg'
+				></img>
+				<button
+					className='map-button'
+					onClick={() => navigate('/map')}
+				>
+					Map
+				</button>
+			</div>
 		</>
 	);
 };
