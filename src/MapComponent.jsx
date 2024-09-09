@@ -444,6 +444,12 @@ Notes: ${attributes.notes || ''}
 `
 						: ''
 				}
+				${
+					attributes.utilityType == 'Telco' ||
+					attributes.utilityType == 'Dom Power + Telco' ||
+					attributes.utilityType == 'City Power + Telco' ||
+					attributes.utilityType == 'Dom Power + City Power + Telco'
+						? `
 <h3>Utilities</h3>
 <table id="customers">
   <tr>
@@ -453,7 +459,9 @@ Notes: ${attributes.notes || ''}
   </tr>
   
     ${utilityAttachmentsHTML}
-    
+    `
+						: ''
+				}
 	
 </table> Notes: ${attributes.notes || ''}</div>
 					  `;
@@ -4148,8 +4156,9 @@ Notes: ${attributes.notes || ''}
 					basemap: 'satellite',
 					layers: [
 						undergroundLinesLayer,
-						polylineLayer,
+
 						groundFeatureLayer,
+						polylineLayer,
 						pointLayer,
 					],
 				},
@@ -4493,9 +4502,9 @@ Notes: ${attributes.notes || ''}
 						}
 					})
 					.catch(async (result, error) => {
-						let graphic = result.edits.addFeatures[0];
-						console.error('Error applying edits:', error);
-						if (error == 'User canceled') {
+						console.error('Error applying edits:', error, result);
+						if (result == 'User canceled') {
+							const graphic = event.result.edits?.addFeatures[0];
 							pointLayer.applyEdits({
 								deleteFeatures: [graphic],
 							});
@@ -5169,6 +5178,14 @@ Notes: ${attributes.notes || ''}
 					'trigger-action',
 					async (event) => {
 						if (event.action.id === 'point-delete-this') {
+							const confirmDelete = window.confirm(
+								'Are you sure you want to delete this Pole?'
+							);
+
+							if (!confirmDelete) {
+								// If the user clicks "Cancel", stop the execution
+								return;
+							}
 							const selectedFeature = view.popup.selectedFeature;
 							// editor.startUpdateWorkflowAtFeatureEdit(
 							// 	view.popup.selectedFeature
@@ -5233,6 +5250,14 @@ Notes: ${attributes.notes || ''}
 					'trigger-action',
 					async (event) => {
 						if (event.action.id === 'groundFeature-delete-this') {
+							const confirmDelete = window.confirm(
+								'Are you sure you want to delete this Ground Feature?'
+							);
+
+							if (!confirmDelete) {
+								// If the user clicks "Cancel", stop the execution
+								return;
+							}
 							const selectedFeature = view.popup.selectedFeature;
 							// editor.startUpdateWorkflowAtFeatureEdit(
 							// 	view.popup.selectedFeature
@@ -5297,6 +5322,14 @@ Notes: ${attributes.notes || ''}
 					'trigger-action',
 					async (event) => {
 						if (event.action.id === 'polyline-delete-this') {
+							const confirmDelete = window.confirm(
+								'Are you sure you want to delete this Overhead Line?'
+							);
+
+							if (!confirmDelete) {
+								// If the user clicks "Cancel", stop the execution
+								return;
+							}
 							const selectedFeature = view.popup.selectedFeature;
 							// editor.startUpdateWorkflowAtFeatureEdit(
 							// 	view.popup.selectedFeature
@@ -5362,6 +5395,14 @@ Notes: ${attributes.notes || ''}
 					'trigger-action',
 					async (event) => {
 						if (event.action.id === 'undergroundLine-delete-this') {
+							const confirmDelete = window.confirm(
+								'Are you sure you want to delete this Underground Line?'
+							);
+
+							if (!confirmDelete) {
+								// If the user clicks "Cancel", stop the execution
+								return;
+							}
 							const selectedFeature = view.popup.selectedFeature;
 							// editor.startUpdateWorkflowAtFeatureEdit(
 							// 	view.popup.selectedFeature

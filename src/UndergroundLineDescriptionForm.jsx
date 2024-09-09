@@ -121,7 +121,7 @@ const UndergroundLineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 						{/* Radio buttons for utility type */}
 
 						{/* Pole information */}
-						<h3>Pole Information</h3>
+						<h3>Underground Line Information</h3>
 						<div className='utility-options'>
 							<label htmlFor='utilityType'>Utility Type:</label>
 							<select
