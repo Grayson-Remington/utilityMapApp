@@ -40,6 +40,7 @@ const MapComponent = () => {
 	const polylineLayerRef = useRef(null);
 	const undergroundLinesLayerRef = useRef(null);
 	const [editorState, setEditorState] = useState('');
+	const [isMapLoaded, setIsMapLoaded] = useState(false);
 	const [utilityTypeFilterState, setUtilityTypeFilterState] = useState([
 		'None',
 		'Dom Power',
@@ -224,7 +225,7 @@ const MapComponent = () => {
 				div.innerHTML = `
 				<div style="display: flex; flex-direction: column; align-items: center;">
 				<h3>Pole Information</h3>
-					   <table id="customers">
+					   <table id="customers" class="general-info">
   <tr>
     <th>Pole Number</th>
     <th>Pole Owner</th>
@@ -243,7 +244,7 @@ ${
 	attributes.utilityType == 'Dom Power + City Power + Telco'
 		? `
 <h3>Dominion Power</h3>
-<table id="customers">
+<table id="customers" class="dom-power">
   <tr>
     <th>Power Phase</th>
 		<th>Equipment</th>
@@ -269,7 +270,7 @@ ${
 	attributes.utilityType == 'Dom Power + City Power + Telco'
 		? `
 <h3>City Power</h3>
-<table id="customers">
+<table id="customers" class="city-power">
   <tr>
     <th>Power Phase</th>
 		<th>Equipment</th>
@@ -294,7 +295,7 @@ ${
 	attributes.utilityType == 'Dom Power + City Power + Telco'
 		? `
 <h3>Utilities</h3>
-<table id="customers">
+<table id="customers" class="telco">
   <tr>
     <th>Utility Owner</th>
     <th>Equipment</th>
@@ -416,7 +417,19 @@ Notes: ${attributes.notes || ''}
 					attributes.utilityType == 'Dom Power + City Power' ||
 					attributes.utilityType == 'Dom Power + City Power + Telco'
 						? `
-				Dominion Power Phase: ${attributes.domPowerPhase || ''}
+						<table id="customers" class="dom-power">
+  <tr>
+    <th>Dominion Power Phase</th>
+    
+  </tr>
+  <tr>
+    
+    <td>${attributes.domPowerPhase || ''}</td>
+		
+		
+  </tr>  
+</table>
+				
 				`
 						: ''
 				}
@@ -426,7 +439,7 @@ Notes: ${attributes.notes || ''}
 					attributes.utilityType == 'Dom Power + City Power' ||
 					attributes.utilityType == 'Dom Power + City Power + Telco'
 						? `
-					   <table id="customers">
+					   <table id="customers" class="city-power">
   <tr>
     <th>City Power Phase</th>
     <th>City Power Equipment</th>
@@ -451,7 +464,7 @@ Notes: ${attributes.notes || ''}
 					attributes.utilityType == 'Dom Power + City Power + Telco'
 						? `
 <h3>Utilities</h3>
-<table id="customers">
+<table id="customers" class="telco">
   <tr>
     <th>Utility Owner</th>
     <th>Equipment</th>
@@ -506,7 +519,7 @@ Notes: ${attributes.notes || ''}
 <br/>
 
 <h3>Utilities</h3>
-<table id="customers">
+<table id="customers" class="telco">
   <tr>
     <th>Utility Owner</th>
     <th>Conduits</th>
@@ -3622,6 +3635,7 @@ Notes: ${attributes.notes || ''}
 				}, // Optional: symbol for unmatched values
 			});
 			const pointLayer = new FeatureLayer({
+				minScale: 5000,
 				title: 'Poles',
 				source: [], // This is required to create an empty layer
 				outFields: ['*'],
@@ -3740,6 +3754,7 @@ Notes: ${attributes.notes || ''}
 			});
 			pointLayerRef.current = pointLayer;
 			const groundFeatureLayer = new FeatureLayer({
+				minScale: 5000,
 				title: 'Ground Features',
 				source: [], // This is required to create an empty layer
 				outFields: ['*'],
@@ -3812,6 +3827,7 @@ Notes: ${attributes.notes || ''}
 			});
 			groundFeatureLayerRef.current = groundFeatureLayer;
 			const polylineLayer = new FeatureLayer({
+				minScale: 5000,
 				title: 'Overhead Lines',
 				source: [], // This is required to create an empty layer
 				outFields: ['*'],
@@ -3882,6 +3898,7 @@ Notes: ${attributes.notes || ''}
 			polylineLayerRef.current = polylineLayer;
 
 			const undergroundLinesLayer = new FeatureLayer({
+				minScale: 5000,
 				title: 'Underground Lines',
 				source: [], // This is required to create an empty layer
 				outFields: ['*'],
@@ -4162,8 +4179,12 @@ Notes: ${attributes.notes || ''}
 						pointLayer,
 					],
 				},
-				center: [-77.436, 37.5407],
-				zoom: 12,
+				center: [-77.42375, 37.53789],
+
+				zoom: 18,
+				ui: {
+					components: ['attribution'], // Exclude zoom widget by not including "zoom"
+				},
 			});
 
 			viewRef.current = view;
@@ -4849,14 +4870,19 @@ Notes: ${attributes.notes || ''}
 			});
 			view.ui.add(utilityTypeExpand, 'bottom-left');
 			view.ui.add(search, {
-				position: 'top-right',
+				position: 'top-left',
 			});
 			view.ui.add(editorExpand, 'top-right');
 
 			view.ui.add(legendExpand, 'bottom-right');
-			view.when(() => {});
-			view.when(() => {});
 
+			view.when(() => {});
+			view.when(() => {
+				var loadingElement = document.getElementById('loading');
+				loadingElement.style.display = 'none';
+				console.log('map is set to true');
+				setIsMapLoaded(true);
+			});
 			view.on('key-down', (event) => {
 				// Check if the Escape key (key code 'Escape') was pressed
 				if (event.key === 'Escape') {
@@ -5528,12 +5554,30 @@ Notes: ${attributes.notes || ''}
 		groundFeatureLayerRef.current.visible =
 			featureLayerFilters.includes('groundFeatureLayer');
 	};
+
 	return (
 		<>
 			<div
-				id='utilityType-filter'
-				className='esri-widget'
+				id='loading'
+				style={{ width: '100%', height: '100%' }}
 			>
+				Loading
+			</div>
+			<div
+				id='utilityType-filter'
+				class='esri-widget'
+			>
+				<div
+					style={{
+						paddingTop: '5px',
+						justifySelf: 'center',
+						alignSelf: 'center',
+						textDecoration: 'underline',
+						fontSize: '16px',
+					}}
+				>
+					Utility Types
+				</div>
 				<label>
 					<input
 						type='checkbox'
@@ -5564,6 +5608,18 @@ Notes: ${attributes.notes || ''}
 					/>
 					Dom Power
 				</label>
+
+				<div
+					style={{
+						paddingTop: '5px',
+						justifySelf: 'center',
+						alignSelf: 'center',
+						textDecoration: 'underline',
+						fontSize: '16px',
+					}}
+				>
+					Feature Types
+				</div>
 				<label>
 					<input
 						type='checkbox'
@@ -5604,7 +5660,19 @@ Notes: ${attributes.notes || ''}
 					/>
 					Underground Lines
 				</label>
-				<button onClick={applyFilter}>Apply Filter</button>
+				<button
+					className='filter-button'
+					style={{
+						minWidth: '50px',
+						padding: '5px',
+						backgroundColor: '#04aa6d',
+						color: 'white',
+						borderRadius: '10px',
+					}}
+					onClick={applyFilter}
+				>
+					Apply Filter
+				</button>
 			</div>
 
 			{showPointForm && (
@@ -5636,6 +5704,7 @@ Notes: ${attributes.notes || ''}
 				/>
 			)}
 			<div
+				id='viewDiv'
 				className='mapDiv'
 				ref={mapDiv}
 			></div>

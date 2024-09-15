@@ -3,6 +3,7 @@ import axios from 'axios';
 import MapView from '@arcgis/core/views/MapView';
 import Expand from '@arcgis/core/widgets/Expand.js';
 import Search from '@arcgis/core/widgets/Search';
+import Legend from '@arcgis/core/widgets/Legend.js';
 import UniqueValueRenderer from '@arcgis/core/renderers/UniqueValueRenderer.js';
 import { useNavigate } from 'react-router-dom';
 
@@ -103,7 +104,7 @@ function UnAuthMapComponent({ onLoginSuccess }) {
 				div.innerHTML = `
 				<div style="display: flex; flex-direction: column; align-items: center;">
 				<h3>Pole Information</h3>
-					   <table id="customers">
+					   <table id="customers" class="general-info">
   <tr>
     <th>Pole Number</th>
     <th>Pole Owner</th>
@@ -122,7 +123,7 @@ ${
 	attributes.utilityType == 'Dom Power + City Power + Telco'
 		? `
 <h3>Dominion Power</h3>
-<table id="customers">
+<table id="customers" class="dom-power">
   <tr>
     <th>Power Phase</th>
 		<th>Equipment</th>
@@ -148,7 +149,7 @@ ${
 	attributes.utilityType == 'Dom Power + City Power + Telco'
 		? `
 <h3>City Power</h3>
-<table id="customers">
+<table id="customers" class="city-power">
   <tr>
     <th>Power Phase</th>
 		<th>Equipment</th>
@@ -173,7 +174,7 @@ ${
 	attributes.utilityType == 'Dom Power + City Power + Telco'
 		? `
 <h3>Utilities</h3>
-<table id="customers">
+<table id="customers" class="telco">
   <tr>
     <th>Utility Owner</th>
     <th>Equipment</th>
@@ -3606,10 +3607,11 @@ Notes: ${attributes.notes || ''}
 					content: pointPopupContent,
 				},
 				renderer: pointRenderer,
-				// minScale: 5000,
+				minScale: 5000,
 			});
 			pointLayerRef.current = pointLayer;
 			const groundFeatureLayer = new FeatureLayer({
+				minScale: 5000,
 				title: 'Ground Features',
 				source: [], // This is required to create an empty layer
 				outFields: ['*'],
@@ -3679,6 +3681,7 @@ Notes: ${attributes.notes || ''}
 			});
 			groundFeatureLayerRef.current = groundFeatureLayer;
 			const polylineLayer = new FeatureLayer({
+				minScale: 5000,
 				title: 'Overhead Lines',
 				source: [], // This is required to create an empty layer
 				outFields: ['*'],
@@ -3748,6 +3751,7 @@ Notes: ${attributes.notes || ''}
 			polylineLayerRef.current = polylineLayer;
 
 			const undergroundLinesLayer = new FeatureLayer({
+				minScale: 5000,
 				title: 'Underground Lines',
 				source: [], // This is required to create an empty layer
 				outFields: ['*'],
@@ -4021,8 +4025,12 @@ Notes: ${attributes.notes || ''}
 						pointLayer,
 					],
 				},
-				center: [-77.436, 37.5407],
-				zoom: 12,
+				center: [-77.42375, 37.53789],
+
+				zoom: 18,
+				ui: {
+					components: ['attribution'], // Exclude zoom widget by not including "zoom"
+				},
 			});
 
 			viewRef.current = view;
@@ -4041,9 +4049,60 @@ Notes: ${attributes.notes || ''}
 					});
 				}
 			}
+			const legend = new Legend({
+				style: {
+					type: 'card',
+					layout: 'stack',
+				},
+				view: view,
+				layerInfos: [
+					{
+						layer: pointLayer,
+						title: 'Poles', // Optional, set a custom title for the layer in the legend
+						legendElements: [
+							{
+								type: 'symbol-table', // autocasts as new SymbolTableElement
+								title: 'Unknown Pole Owner', // Custom title for the defaultSymbol
+								infos: [
+									{
+										label: 'Other Poles', // Custom label for the defaultSymbol in the legend
+										symbol: pointRenderer.defaultSymbol, // Refer to the defaultSymbol
+									},
+								],
+							},
+						],
+					},
+					{
+						layer: groundFeatureLayer,
+						title: 'Ground Features', // Optional, set a custom title for the layer in the legend
+					},
+					{
+						layer: polylineLayer,
+						title: 'Overhead Lines', // Optional, set a custom title for the layer in the legend
+					},
+					{
+						layer: undergroundLinesLayer,
+						title: 'Underground Lines', // Optional, set a custom title for the layer in the legend
+					},
+				],
+			});
+			const legendExpand = new Expand({
+				view: view,
+				content: legend,
+			});
+			view.ui.add(legendExpand, 'bottom-right');
+			const loginElement = document.getElementById('login');
 
+			const loginExpand = new Expand({
+				view: view,
+				content: loginElement,
+				expandIcon: 'sign-in',
+				group: 'bottom-left',
+			});
+			view.ui.add(loginExpand, 'top-right');
 			const utilityTypeElement =
 				document.getElementById('utilityType-filter');
+
 			// Fires when feature is created in the Point Layer
 			const utilityTypeExpand = new Expand({
 				view: view,
@@ -4058,6 +4117,10 @@ Notes: ${attributes.notes || ''}
 
 			view.ui.add(search, {
 				position: 'top-left',
+			});
+			view.when(() => {
+				var loadingElement = document.getElementById('loading');
+				loadingElement.style.display = 'none';
 			});
 			view.when(() => {
 				reactiveUtils.on(
@@ -4136,9 +4199,26 @@ Notes: ${attributes.notes || ''}
 	return (
 		<>
 			<div
+				id='loading'
+				style={{ width: '100%', height: '100%' }}
+			>
+				Loading
+			</div>
+			<div
 				id='utilityType-filter'
 				class='esri-widget'
 			>
+				<div
+					style={{
+						paddingTop: '5px',
+						justifySelf: 'center',
+						alignSelf: 'center',
+						textDecoration: 'underline',
+						fontSize: '16px',
+					}}
+				>
+					Utility Types
+				</div>
 				<label>
 					<input
 						type='checkbox'
@@ -4169,6 +4249,18 @@ Notes: ${attributes.notes || ''}
 					/>
 					Dom Power
 				</label>
+
+				<div
+					style={{
+						paddingTop: '5px',
+						justifySelf: 'center',
+						alignSelf: 'center',
+						textDecoration: 'underline',
+						fontSize: '16px',
+					}}
+				>
+					Feature Types
+				</div>
 				<label>
 					<input
 						type='checkbox'
@@ -4209,12 +4301,23 @@ Notes: ${attributes.notes || ''}
 					/>
 					Underground Lines
 				</label>
-				<button onClick={applyFilter}>Apply Filter</button>
+				<button
+					className='filter-button'
+					style={{
+						minWidth: '50px',
+						padding: '5px',
+						backgroundColor: '#04aa6d',
+						color: 'white',
+						borderRadius: '10px',
+					}}
+					onClick={applyFilter}
+				>
+					Apply Filter
+				</button>
 			</div>
-			<form
-				onSubmit={handlePasswordSubmit}
+			<div
+				id='login'
 				style={{
-					position: 'absolute',
 					zIndex: 100,
 					display: 'flex',
 					flexDirection: 'row',
@@ -4224,15 +4327,40 @@ Notes: ${attributes.notes || ''}
 					paddingRight: '15px',
 				}}
 			>
-				<input
-					type='password'
-					placeholder='Password'
-					value={password}
-					onChange={(e) => setPassword(e.target.value)}
-				/>
-				<button type='submit'>Login</button>
-			</form>
-
+				<form
+					onSubmit={handlePasswordSubmit}
+					style={{
+						zIndex: 100,
+						display: 'flex',
+						flexDirection: 'row',
+						gap: '5px',
+						alignItems: 'center',
+						justifyContent: 'flex-end',
+						width: '100%',
+						paddingRight: '15px',
+					}}
+				>
+					<input
+						type='password'
+						placeholder='Password'
+						value={password}
+						onChange={(e) => setPassword(e.target.value)}
+					/>
+					<button
+						className='login-button'
+						style={{
+							minWidth: '50px',
+							padding: '5px',
+							backgroundColor: '#04aa6d',
+							color: 'white',
+							borderRadius: '10px',
+						}}
+						type='submit'
+					>
+						Login
+					</button>
+				</form>
+			</div>
 			<div
 				className='mapDiv'
 				ref={mapDiv}

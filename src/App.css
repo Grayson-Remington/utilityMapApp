@@ -103,8 +103,20 @@ tr {
 	padding-top: 12px;
 	padding-bottom: 12px;
 	text-align: center;
-	background-color: #04aa6d;
+
 	color: white;
+}
+.general-info th {
+	background-color: #04aa6d;
+}
+.telco th {
+	background-color: orange;
+}
+.dom-power th {
+	background-color: red;
+}
+.city-power th {
+	background-color: purple;
 }
 input {
 	height: 24px;
@@ -135,6 +147,26 @@ input {
 }
 
 .map-button:hover {
-	transform: scale(1.1);
+	transform: scale(1.05);
+	cursor: pointer;
+}
+
+.login-button:hover {
+	cursor: pointer;
+}
+
+#utilityType-filter {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 10px;
+}
+
+#utilityType-filter label {
+	display: flex;
+	align-items: center;
+}
+
+.filter-button:hover {
 	cursor: pointer;
 }

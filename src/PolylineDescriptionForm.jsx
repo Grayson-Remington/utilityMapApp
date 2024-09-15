@@ -71,7 +71,11 @@ const PolylineDescriptionForm = ({ onSubmit, onClose, graphic }) => {
 			...prevPolylineDescription,
 			utilityAttachments: [
 				...prevPolylineDescription.utilityAttachments,
-				{ utilityOwner: '', spliceCase: '' },
+				{
+					utilityOwner: 'Unknown',
+					utilityEquipment: '',
+					utilityLaterals: '',
+				},
 			],
 		}));
 	};
