@@ -228,7 +228,7 @@ Notes: ${attributes.notes || ''}</div>
 				<div style="display: flex; flex-direction: column; align-items: center;">
 				<h3>Ground Feature Information</h3>
 				Feature Type: ${attributes.featureType || ''}
-					   <table id="customers">
+					   <table id="customers" class="general-info">
   <tr>
     
     <th>Feature Owner</th>
@@ -306,7 +306,7 @@ Notes: ${attributes.notes || ''}
 					attributes.utilityType == 'Dom Power + City Power' ||
 					attributes.utilityType == 'Dom Power + City Power + Telco'
 						? `
-					   <table id="customers">
+					   <table id="customers" class="city-power">
   <tr>
     <th>City Power Phase</th>
     <th>City Power Equipment</th>
@@ -325,7 +325,7 @@ Notes: ${attributes.notes || ''}
 						: ''
 				}
 <h3>Utilities</h3>
-<table id="customers">
+<table id="customers" class="telco">
   <tr>
     <th>Utility Owner</th>
     <th>Equipment</th>

@@ -349,7 +349,7 @@ Notes: ${attributes.notes || ''}</div>
 				<div style="display: flex; flex-direction: column; align-items: center;">
 				<h3>Ground Feature Information</h3>
 				Feature Type: ${attributes.featureType || ''}
-					   <table id="customers">
+					   <table id="customers" class="general-info">
   <tr>
     
     <th>Feature Owner</th>
@@ -1340,6 +1340,10 @@ Notes: ${attributes.notes || ''}
 																	'Strip',
 																miterLimit: 10,
 																width: 0,
+																color: [
+																	255, 0, 0,
+																	255,
+																],
 																color: [
 																	128, 0, 128,
 																	255,
