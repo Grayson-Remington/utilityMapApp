@@ -132,7 +132,7 @@ const HomePage = () => {
 					<h1 className='mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl lg:text-5xl text-center'>
 						What Developments Benefit from Dry Utility Services?
 					</h1>
-					<div className='border rounded-lg border-slate-700 px-8 py-4 max-w-[500px] w-120 grid grid-cols-2'>
+					<div className='border rounded-lg border-slate-700 px-8 py-4 max-w-[500px] w-80 md:w-96 grid grid-cols-2'>
 						<div className='flex justify-center'>
 							<ul className='list-disc gap-2'>
 								<li className=''>Urban*</li>
@@ -144,7 +144,7 @@ const HomePage = () => {
 						<div className='flex justify-center'>
 							<ul className='list-disc gap-2'>
 								<li>Education</li>
-								<li>Roadway Improvements</li>
+								<li>Transportation</li>
 								<li>Recreational</li>
 								<li>Subdivisions</li>
 							</ul>
