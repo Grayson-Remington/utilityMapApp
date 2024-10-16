@@ -1340,10 +1340,7 @@ Notes: ${attributes.notes || ''}
 																	'Strip',
 																miterLimit: 10,
 																width: 0,
-																color: [
-																	255, 0, 0,
-																	255,
-																],
+
 																color: [
 																	128, 0, 128,
 																	255,
@@ -2994,17 +2991,152 @@ Notes: ${attributes.notes || ''}
 			});
 
 			const groundFeatureRenderer = new UniqueValueRenderer({
-				field: 'utilityType', // replace with the attribute field name
+				field: 'utilityType',
+
 				uniqueValueInfos: [
 					{
 						label: 'Telco',
 						value: 'Telco', // replace with the first unique value
 						symbol: {
-							type: 'simple-marker', // autocasts as new SimpleMarkerSymbol()
-							style: 'square',
-							color: 'orange', // color for the first unique value
-							size: '16px', // size of the circle
-						}, // replace with the symbol corresponding to value1
+							type: 'cim',
+							data: {
+								type: 'CIMSymbolReference',
+								symbol: {
+									type: 'CIMPointSymbol',
+									symbolLayers: [
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											size: 10,
+											colorLocked: true,
+											anchorPointUnits: 'Relative',
+											frame: {
+												xmin: -5,
+												ymin: -5,
+												xmax: 5,
+												ymax: 5,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														x: 0,
+														y: 0,
+													},
+													symbol: {
+														type: 'CIMTextSymbol',
+														fontFamilyName: 'Arial',
+														fontStyleName: 'Bold',
+														height: 10,
+														horizontalAlignment:
+															'Center',
+														offsetX: 0,
+														offsetY: 0,
+														symbol: {
+															type: 'CIMPolygonSymbol',
+															symbolLayers: [
+																{
+																	type: 'CIMSolidFill',
+																	enable: true,
+																	color: [
+																		255,
+																		255,
+																		255,
+																		255,
+																	],
+																},
+															],
+														},
+														verticalAlignment:
+															'Center',
+													},
+													textString: 'HH',
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+										{
+											type: 'CIMVectorMarker',
+											enable: true,
+											anchorPointUnits: 'Relative',
+											dominantSizeAxis3D: 'Y',
+											size: 14,
+											billboardMode3D: 'FaceNearPlane',
+											frame: {
+												xmin: 0,
+												ymin: 0,
+												xmax: 28,
+												ymax: 17,
+											},
+											markerGraphics: [
+												{
+													type: 'CIMMarkerGraphic',
+													geometry: {
+														rings: [
+															[
+																[25.36, 0],
+																[2.64, 0],
+																[1.63, 0.19],
+																[0.77, 0.74],
+																[0.2, 1.56],
+																[0, 2.52],
+																[0, 14.48],
+																[0.2, 15.44],
+																[0.77, 16.26],
+																[1.63, 16.81],
+																[2.64, 17],
+																[25.36, 17],
+																[26.37, 16.81],
+																[27.23, 16.26],
+																[27.8, 15.44],
+																[28, 14.48],
+																[28, 2.52],
+																[27.8, 1.56],
+																[27.23, 0.74],
+																[26.37, 0.19],
+																[25.36, 0],
+															],
+														],
+													},
+													symbol: {
+														type: 'CIMPolygonSymbol',
+														symbolLayers: [
+															{
+																type: 'CIMSolidStroke',
+																enable: true,
+																capStyle:
+																	'Round',
+																joinStyle:
+																	'Round',
+																lineStyle3D:
+																	'Strip',
+																miterLimit: 10,
+																width: 0,
+																color: [
+																	0, 0, 0,
+																	255,
+																],
+															},
+															{
+																type: 'CIMSolidFill',
+																enable: true,
+																color: [
+																	255, 0, 0,
+																	255,
+																],
+															},
+														],
+													},
+												},
+											],
+											scaleSymbolsProportionally: true,
+											respectFrame: true,
+										},
+									],
+								},
+							},
+						},
 					},
 					{
 						label: 'Power',
@@ -3758,7 +3890,7 @@ Notes: ${attributes.notes || ''}
 			});
 			pointLayerRef.current = pointLayer;
 			const groundFeatureLayer = new FeatureLayer({
-				minScale: 5000,
+				minScale: 2000,
 				title: 'Ground Features',
 				source: [], // This is required to create an empty layer
 				outFields: ['*'],
@@ -5499,7 +5631,6 @@ Notes: ${attributes.notes || ''}
 			undergroundLinesLayerRef.current = null;
 			polylineLayerRef.current = null;
 			groundFeatureLayerRef.current = null;
-			window.location.reload();
 		};
 	}, []);
 
@@ -5561,124 +5692,6 @@ Notes: ${attributes.notes || ''}
 
 	return (
 		<>
-			<div
-				id='loading'
-				style={{ width: '100%', height: '100%' }}
-			>
-				Loading
-			</div>
-			<div
-				id='utilityType-filter'
-				class='esri-widget'
-			>
-				<div
-					style={{
-						paddingTop: '5px',
-						justifySelf: 'center',
-						alignSelf: 'center',
-						textDecoration: 'underline',
-						fontSize: '16px',
-					}}
-				>
-					Utility Types
-				</div>
-				<label>
-					<input
-						type='checkbox'
-						name='utilityType'
-						value='Telco'
-						onChange={handleUtilityTypeFilter}
-						defaultChecked
-					/>
-					Telco
-				</label>
-				<label>
-					<input
-						type='checkbox'
-						name='utilityType'
-						value='City Power'
-						onChange={handleUtilityTypeFilter}
-						defaultChecked
-					/>
-					City Power
-				</label>
-				<label>
-					<input
-						type='checkbox'
-						name='utilityType'
-						value='Dom Power'
-						onChange={handleUtilityTypeFilter}
-						defaultChecked
-					/>
-					Dom Power
-				</label>
-
-				<div
-					style={{
-						paddingTop: '5px',
-						justifySelf: 'center',
-						alignSelf: 'center',
-						textDecoration: 'underline',
-						fontSize: '16px',
-					}}
-				>
-					Feature Types
-				</div>
-				<label>
-					<input
-						type='checkbox'
-						name='utilityType'
-						value='pointLayer'
-						onChange={handleFeatureLayerFilter}
-						defaultChecked
-					/>
-					Poles
-				</label>
-				<label>
-					<input
-						type='checkbox'
-						name='utilityType'
-						value='groundFeatureLayer'
-						onChange={handleFeatureLayerFilter}
-						defaultChecked
-					/>
-					Ground Features
-				</label>
-				<label>
-					<input
-						type='checkbox'
-						name='utilityType'
-						value='polylineLayer'
-						onChange={handleFeatureLayerFilter}
-						defaultChecked
-					/>
-					Overhead Lines
-				</label>
-				<label>
-					<input
-						type='checkbox'
-						name='utilityType'
-						value='undergroundLinesLayer'
-						onChange={handleFeatureLayerFilter}
-						defaultChecked
-					/>
-					Underground Lines
-				</label>
-				<button
-					className='filter-button'
-					style={{
-						minWidth: '50px',
-						padding: '5px',
-						backgroundColor: '#04aa6d',
-						color: 'white',
-						borderRadius: '10px',
-					}}
-					onClick={applyFilter}
-				>
-					Apply Filter
-				</button>
-			</div>
-
 			{showPointForm && (
 				<PointDescriptionForm
 					onSubmit={showPointForm.onSubmit}
@@ -5711,7 +5724,119 @@ Notes: ${attributes.notes || ''}
 				id='viewDiv'
 				className='mapDiv'
 				ref={mapDiv}
-			></div>
+			>
+				<div
+					id='utilityType-filter'
+					class='esri-widget'
+				>
+					<div
+						style={{
+							paddingTop: '5px',
+							justifySelf: 'center',
+							alignSelf: 'center',
+							textDecoration: 'underline',
+							fontSize: '16px',
+						}}
+					>
+						Utility Types
+					</div>
+					<label>
+						<input
+							type='checkbox'
+							name='utilityType'
+							value='Telco'
+							onChange={handleUtilityTypeFilter}
+							defaultChecked
+						/>
+						Telco
+					</label>
+					<label>
+						<input
+							type='checkbox'
+							name='utilityType'
+							value='City Power'
+							onChange={handleUtilityTypeFilter}
+							defaultChecked
+						/>
+						City Power
+					</label>
+					<label>
+						<input
+							type='checkbox'
+							name='utilityType'
+							value='Dom Power'
+							onChange={handleUtilityTypeFilter}
+							defaultChecked
+						/>
+						Dom Power
+					</label>
+
+					<div
+						style={{
+							paddingTop: '5px',
+							justifySelf: 'center',
+							alignSelf: 'center',
+							textDecoration: 'underline',
+							fontSize: '16px',
+						}}
+					>
+						Feature Types
+					</div>
+					<label>
+						<input
+							type='checkbox'
+							name='utilityType'
+							value='pointLayer'
+							onChange={handleFeatureLayerFilter}
+							defaultChecked
+						/>
+						Poles
+					</label>
+					<label>
+						<input
+							type='checkbox'
+							name='utilityType'
+							value='groundFeatureLayer'
+							onChange={handleFeatureLayerFilter}
+							defaultChecked
+						/>
+						Ground Features
+					</label>
+					<label>
+						<input
+							type='checkbox'
+							name='utilityType'
+							value='polylineLayer'
+							onChange={handleFeatureLayerFilter}
+							defaultChecked
+						/>
+						Overhead Lines
+					</label>
+					<label>
+						<input
+							type='checkbox'
+							name='utilityType'
+							value='undergroundLinesLayer'
+							onChange={handleFeatureLayerFilter}
+							defaultChecked
+						/>
+						Underground Lines
+					</label>
+					<button
+						className='filter-button'
+						style={{
+							minWidth: '50px',
+							padding: '5px',
+							backgroundColor: '#04aa6d',
+							color: 'white',
+							borderRadius: '10px',
+						}}
+						onClick={applyFilter}
+					>
+						Apply Filter
+					</button>
+				</div>
+			</div>
 		</>
 	);
 };

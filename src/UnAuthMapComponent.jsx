@@ -30,6 +30,18 @@ function UnAuthMapComponent({ onLoginSuccess }) {
 	const mapDiv = useRef(null);
 	const viewRef = useRef(null);
 	const editorRef = useRef(null);
+	const searchRef = useRef(null);
+	const filterRef = useRef(null);
+	const loginRef = useRef(null);
+	const legendRef = useRef(null);
+	const legendExpandRef = useRef(null);
+	const loginExpandRef = useRef(null);
+	const utilityTypeFilterRef = useRef(null);
+	const utilityTypeExpandRef = useRef(null);
+	const undergroundLineRendererRef = useRef(null);
+	const polylineRendererRef = useRef(null);
+	const pointRendererRef = useRef(null);
+	const groundFeatureRendererRef = useRef(null);
 	const pointLayerRef = useRef(null);
 	const groundFeatureLayerRef = useRef(null);
 	const polylineLayerRef = useRef(null);
@@ -2847,7 +2859,7 @@ Notes: ${attributes.notes || ''}
 				}, // Optional: symbol for unmatched values
 				defaultLabel: 'Unknown',
 			});
-
+			pointRendererRef.current = pointRenderer;
 			const groundFeatureRenderer = new UniqueValueRenderer({
 				field: 'utilityType', // replace with the attribute field name
 				uniqueValueInfos: [
@@ -2882,7 +2894,7 @@ Notes: ${attributes.notes || ''}
 				}, // Optional: symbol for unmatched values
 				defaultLabel: 'Unknown',
 			});
-
+			groundFeatureRendererRef.current = groundFeatureRenderer;
 			const undergroundLineRenderer = new UniqueValueRenderer({
 				field: 'utilityType', // Attribute field name
 				uniqueValueInfos: [
@@ -3146,6 +3158,7 @@ Notes: ${attributes.notes || ''}
 					},
 				}, // Optional: symbol for unmatched values
 			});
+			undergroundLineRendererRef.current = undergroundLineRenderer;
 			const polylineRenderer = new UniqueValueRenderer({
 				field: 'utilityType', // Attribute field name
 				uniqueValueInfos: [
@@ -3493,6 +3506,7 @@ Notes: ${attributes.notes || ''}
 					},
 				}, // Optional: symbol for unmatched values
 			});
+			polylineRendererRef.current = polylineRenderer;
 			const pointLayer = new FeatureLayer({
 				title: 'Poles',
 				source: [], // This is required to create an empty layer
@@ -4086,10 +4100,12 @@ Notes: ${attributes.notes || ''}
 					},
 				],
 			});
+			legendRef.current = legend;
 			const legendExpand = new Expand({
 				view: view,
 				content: legend,
 			});
+			legendExpandRef.current = legendExpand;
 			view.ui.add(legendExpand, 'bottom-right');
 			const loginElement = document.getElementById('login');
 
@@ -4099,6 +4115,7 @@ Notes: ${attributes.notes || ''}
 				expandIcon: 'sign-in',
 				group: 'bottom-left',
 			});
+			loginExpandRef.current = loginExpand;
 			view.ui.add(loginExpand, 'top-right');
 			const utilityTypeElement =
 				document.getElementById('utilityType-filter');
@@ -4110,11 +4127,12 @@ Notes: ${attributes.notes || ''}
 				expandIcon: 'filter',
 				group: 'bottom-left',
 			});
+			utilityTypeExpandRef.current = utilityTypeExpand;
 			view.ui.add(utilityTypeExpand, 'bottom-left');
 			var search = new Search({
 				view: view,
 			});
-
+			searchRef.current = search;
 			view.ui.add(search, {
 				position: 'top-left',
 			});
@@ -4133,12 +4151,26 @@ Notes: ${attributes.notes || ''}
 			});
 		}
 		return () => {
-			console.log('Cleanup due to dependency change:');
+			mapDiv.current = null;
+			viewRef.current = null;
+			editorRef.current = null;
+			searchRef.current = null;
+			filterRef.current = null;
+			loginRef.current = null;
+			legendRef.current = null;
+			legendExpandRef.current = null;
+			loginExpandRef.current = null;
+			utilityTypeFilterRef.current = null;
+			utilityTypeExpandRef.current = null;
+			undergroundLineRendererRef.current = null;
+			polylineRendererRef.current = null;
+			pointRendererRef.current = null;
+			groundFeatureRendererRef.current = null;
+
 			pointLayerRef.current = null;
-			undergroundLinesLayerRef.current = null;
-			polylineLayerRef.current = null;
 			groundFeatureLayerRef.current = null;
-			window.location.reload();
+			polylineLayerRef.current = null;
+			undergroundLinesLayerRef.current = null;
 		};
 	}, []);
 	const handleUtilityTypeFilter = (event) => {
@@ -4199,155 +4231,108 @@ Notes: ${attributes.notes || ''}
 	return (
 		<>
 			<div
-				id='loading'
-				style={{ width: '100%', height: '100%' }}
-			>
-				Loading
-			</div>
-			<div
-				id='utilityType-filter'
-				class='esri-widget'
+				className='mapDiv'
+				ref={mapDiv}
 			>
 				<div
-					style={{
-						paddingTop: '5px',
-						justifySelf: 'center',
-						alignSelf: 'center',
-						textDecoration: 'underline',
-						fontSize: '16px',
-					}}
+					id='utilityType-filter'
+					class='esri-widget'
 				>
-					Utility Types
-				</div>
-				<label>
-					<input
-						type='checkbox'
-						name='utilityType'
-						value='Telco'
-						onChange={handleUtilityTypeFilter}
-						defaultChecked
-					/>
-					Telco
-				</label>
-				<label>
-					<input
-						type='checkbox'
-						name='utilityType'
-						value='City Power'
-						onChange={handleUtilityTypeFilter}
-						defaultChecked
-					/>
-					City Power
-				</label>
-				<label>
-					<input
-						type='checkbox'
-						name='utilityType'
-						value='Dom Power'
-						onChange={handleUtilityTypeFilter}
-						defaultChecked
-					/>
-					Dom Power
-				</label>
+					<div
+						style={{
+							paddingTop: '5px',
+							justifySelf: 'center',
+							alignSelf: 'center',
+							textDecoration: 'underline',
+							fontSize: '16px',
+						}}
+					>
+						Utility Types
+					</div>
+					<label>
+						<input
+							type='checkbox'
+							name='utilityType'
+							value='Telco'
+							onChange={handleUtilityTypeFilter}
+							defaultChecked
+						/>
+						Telco
+					</label>
+					<label>
+						<input
+							type='checkbox'
+							name='utilityType'
+							value='City Power'
+							onChange={handleUtilityTypeFilter}
+							defaultChecked
+						/>
+						City Power
+					</label>
+					<label>
+						<input
+							type='checkbox'
+							name='utilityType'
+							value='Dom Power'
+							onChange={handleUtilityTypeFilter}
+							defaultChecked
+						/>
+						Dom Power
+					</label>
 
-				<div
-					style={{
-						paddingTop: '5px',
-						justifySelf: 'center',
-						alignSelf: 'center',
-						textDecoration: 'underline',
-						fontSize: '16px',
-					}}
-				>
-					Feature Types
-				</div>
-				<label>
-					<input
-						type='checkbox'
-						name='utilityType'
-						value='pointLayer'
-						onChange={handleFeatureLayerFilter}
-						defaultChecked
-					/>
-					Poles
-				</label>
-				<label>
-					<input
-						type='checkbox'
-						name='utilityType'
-						value='groundFeatureLayer'
-						onChange={handleFeatureLayerFilter}
-						defaultChecked
-					/>
-					Ground Features
-				</label>
-				<label>
-					<input
-						type='checkbox'
-						name='utilityType'
-						value='polylineLayer'
-						onChange={handleFeatureLayerFilter}
-						defaultChecked
-					/>
-					Overhead Lines
-				</label>
-				<label>
-					<input
-						type='checkbox'
-						name='utilityType'
-						value='undergroundLinesLayer'
-						onChange={handleFeatureLayerFilter}
-						defaultChecked
-					/>
-					Underground Lines
-				</label>
-				<button
-					className='filter-button'
-					style={{
-						minWidth: '50px',
-						padding: '5px',
-						backgroundColor: '#04aa6d',
-						color: 'white',
-						borderRadius: '10px',
-					}}
-					onClick={applyFilter}
-				>
-					Apply Filter
-				</button>
-			</div>
-			<div
-				id='login'
-				style={{
-					zIndex: 100,
-					display: 'flex',
-					flexDirection: 'row',
-					alignItems: 'center',
-					justifyContent: 'flex-end',
-					width: '100%',
-					paddingRight: '15px',
-				}}
-			>
-				<form
-					onSubmit={handlePasswordSubmit}
-					style={{
-						zIndex: 100,
-						display: 'flex',
-						flexDirection: 'row',
-						gap: '5px',
-						alignItems: 'center',
-						justifyContent: 'flex-end',
-						width: '100%',
-						paddingRight: '15px',
-					}}
-				>
-					<input
-						type='password'
-						placeholder='Password'
-						value={password}
-						onChange={(e) => setPassword(e.target.value)}
-					/>
+					<div
+						style={{
+							paddingTop: '5px',
+							justifySelf: 'center',
+							alignSelf: 'center',
+							textDecoration: 'underline',
+							fontSize: '16px',
+						}}
+					>
+						Feature Types
+					</div>
+					<label>
+						<input
+							type='checkbox'
+							name='utilityType'
+							value='pointLayer'
+							onChange={handleFeatureLayerFilter}
+							defaultChecked
+						/>
+						Poles
+					</label>
+					<label>
+						<input
+							type='checkbox'
+							name='utilityType'
+							value='groundFeatureLayer'
+							onChange={handleFeatureLayerFilter}
+							defaultChecked
+						/>
+						Ground Features
+					</label>
+					<label>
+						<input
+							type='checkbox'
+							name='utilityType'
+							value='polylineLayer'
+							onChange={handleFeatureLayerFilter}
+							defaultChecked
+						/>
+						Overhead Lines
+					</label>
+					<label>
+						<input
+							type='checkbox'
+							name='utilityType'
+							value='undergroundLinesLayer'
+							onChange={handleFeatureLayerFilter}
+							defaultChecked
+						/>
+						Underground Lines
+					</label>
 					<button
-						className='login-button'
+						className='filter-button'
 						style={{
 							minWidth: '50px',
 							padding: '5px',
@@ -4355,16 +4340,58 @@ Notes: ${attributes.notes || ''}
 							color: 'white',
 							borderRadius: '10px',
 						}}
-						type='submit'
+						onClick={applyFilter}
 					>
-						Login
+						Apply Filter
 					</button>
-				</form>
+				</div>
+				<div
+					id='login'
+					style={{
+						zIndex: 100,
+						display: 'flex',
+						flexDirection: 'row',
+						alignItems: 'center',
+						justifyContent: 'flex-end',
+						width: '100%',
+						paddingRight: '15px',
+					}}
+				>
+					<form
+						onSubmit={handlePasswordSubmit}
+						style={{
+							zIndex: 100,
+							display: 'flex',
+							flexDirection: 'row',
+							gap: '5px',
+							alignItems: 'center',
+							justifyContent: 'flex-end',
+							width: '100%',
+							paddingRight: '15px',
+						}}
+					>
+						<input
+							type='password'
+							placeholder='Password'
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+						/>
+						<button
+							className='login-button'
+							style={{
+								minWidth: '50px',
+								padding: '5px',
+								backgroundColor: '#04aa6d',
+								color: 'white',
+								borderRadius: '10px',
+							}}
+							type='submit'
+						>
+							Login
+						</button>
+					</form>
+				</div>
 			</div>
-			<div
-				className='mapDiv'
-				ref={mapDiv}
-			></div>
 		</>
 	);
 }
