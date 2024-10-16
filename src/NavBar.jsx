@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
+import { LuMail } from 'react-icons/lu';
 
 const NavBar = () => {
 	const [username, setUsername] = useState('');
@@ -9,7 +10,7 @@ const NavBar = () => {
 
 	return (
 		<>
-			<nav className='sticky w-full bg-green-700 h-20 min-h-20 flex justify-between px-4 md:px-24 lg:px-44 items-center text-white z-50'>
+			<nav className='fixed w-full bg-green-700 h-20 min-h-20 flex justify-between px-4 md:px-24 lg:px-44 items-center text-white z-50'>
 				<div className='flex items-center gap-4'>
 					<img
 						className='w-10 h-10'

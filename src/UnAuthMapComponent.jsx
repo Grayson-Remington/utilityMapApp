@@ -47,6 +47,7 @@ function UnAuthMapComponent({ onLoginSuccess }) {
 	const polylineLayerRef = useRef(null);
 	const undergroundLinesLayerRef = useRef(null);
 	const [editorState, setEditorState] = useState('');
+	const [isMapLoaded, setIsMapLoaded] = useState(false);
 
 	const [password, setPassword] = useState('');
 	const [utilityTypeFilterState, setUtilityTypeFilterState] = useState([
@@ -4137,8 +4138,9 @@ Notes: ${attributes.notes || ''}
 				position: 'top-left',
 			});
 			view.when(() => {
-				var loadingElement = document.getElementById('loading');
-				loadingElement.style.display = 'none';
+				var loadingElement = document.getElementById('mapDivContainer');
+
+				setIsMapLoaded(true);
 			});
 			view.when(() => {
 				reactiveUtils.on(
@@ -4229,7 +4231,10 @@ Notes: ${attributes.notes || ''}
 			featureLayerFilters.includes('groundFeatureLayer');
 	};
 	return (
-		<>
+		<div
+			id='mapDivContainer'
+			className={`w-full h-full`}
+		>
 			<div
 				className='mapDiv'
 				ref={mapDiv}
@@ -4392,7 +4397,7 @@ Notes: ${attributes.notes || ''}
 					</form>
 				</div>
 			</div>
-		</>
+		</div>
 	);
 }
 

@@ -14,10 +14,13 @@ function Layout() {
 				minHeight: '100%',
 				display: 'flex',
 				flexDirection: 'column',
+				position: 'relative',
 			}}
 		>
 			<NavBar /> {/* This will take up as much height as needed */}
-			<Outlet />{' '}
+			<div className='h-full w-full pt-20'>
+				<Outlet />{' '}
+			</div>
 			{/* This will take up the remaining height and prevent overflow */}
 		</div>
 	);
